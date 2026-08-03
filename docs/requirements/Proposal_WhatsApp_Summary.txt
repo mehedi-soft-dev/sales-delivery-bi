@@ -1,0 +1,28 @@
+Sale Quotation BI Module — quick summary
+
+Objective:
+এই মডিউলটা মূলত Sale Quotation নিয়ে একটা reporting/dashboard system, যেখানে existing quotation entry process এ হাত দিবো না, শুধু data পড়ে dashboard বানাবো — pipeline, conversion আর aging visibility দেওয়ার জন্য।
+
+Technology Stack:
+- Frontend: Angular + AG Grid / PrimeNG
+- Backend: ASP.NET Core
+- DB: PostgreSQL (materialized view দিয়ে fast read)
+- Cache: Redis
+
+Caching:
+Quotation table থেকে একটা summary view বানানো হবে, প্রতি ৩-৫ মিনিটে refresh হবে। API সেই view থেকে data দিবে, আর Redis দিয়ে cache করা থাকবে যাতে বারবার DB তে না যায় — dashboard fast লোড হবে, DB এর উপর load কম পড়বে। প্রতিটা screen এ "Data as of" time দেখাবে, যাতে বোঝা যায় এটা লাইভ না।
+
+Feature (৩টা dashboard):
+1. Pipeline – open quotations count, pipeline value, pending approval, avg days open
+2. Conversion & Win/Loss – conversion rate, won/lost value, buyer wise performance
+3. Aging – কোন quotation অনেকদিন ধরে পড়ে আছে (৩০ দিনের বেশি হলে high risk হিসেবে দেখাবে)
+
+এই ৩টা dashboard এর কিছু KPI Executive Overview এও ফিড হবে (pipeline value, conversion rate, aged high-value alert)।
+
+Security:
+Role অনুযায়ী access (Admin/Manager/Merchandiser/Finance/Viewer আলাদা আলাদা permission), আর user শুধু নিজের unit এর quotation দেখতে পারবে — এটা server side এ enforce করা হবে, client থেকে bypass করা যাবে না।
+
+Out of Scope:
+Quotation create/edit form, আর Sales Order/Delivery/Invoice/Return এর dashboard — ওগুলো পরে আলাদা phase এ হবে।
+
+Oracle APEX use না করে আপাতত AG Grid / PrimeNG use করতে চাচ্ছি, কারণ এটা আমাদের existing Angular stack এর সাথে সরাসরি মিলে যায়।
