@@ -2,6 +2,8 @@
 
 **Scope note:** nothing exists yet — the `sales` OLTP schema and the `bi` reporting schema are **both designed and created by this project**, via **EF Core Code First**. The BI dashboards themselves stay **read-only, query-only** (no create/edit AppServices, no entry UI) — but the underlying tables must exist, so this project owns their schema and migrations.
 
+**Decision: this is a demo project, no other developers will touch it — MediatR/CQRS was overkill for 5 read-only endpoints and has been dropped.** Plain **AppService classes** instead: each dashboard method explicitly calls the unit-security check and the cache-aside helper itself. Simpler to read and step through; the cost is that "no bypass path" is now enforced by convention (every method must call the two helpers) rather than structurally guaranteed by a pipeline — acceptable here since one person owns the whole codebase.
+
 Full DDD aggregates with behavior/invariants still don't apply on the query side (nothing to protect against invalid mutation there). What DDD contributes here: a proper entity model with a shared audit base, Value Objects, Enums-as-domain-concepts, and strict layer isolation.
 
 ---
@@ -48,10 +50,9 @@ SalesDeliveryBI.sln
 │   │   └── ValueObjects/     Money, DateRange
 │   │
 │   ├── SalesDeliveryBI.Application       (depends on: Domain only)
-│   │   ├── Abstractions/     IQuotationQueryRepository, ICacheService, ICurrentUserContext
-│   │   ├── Dtos/             QuotationPipelineDto, ConversionDto, AgingDto, QuotationDetailDto
-│   │   ├── Queries/          GetQuotationPipelineQuery/Handler, GetConversionQuery/Handler, GetAgingQuery/Handler  (MediatR)
-│   │   ├── Behaviors/        UnitSecurityBehavior, CachingBehavior, ValidationBehavior  (MediatR pipeline)
+│   │   ├── Abstractions/     IQuotationRepository, ICacheService, ICurrentUserContext, IUnitAccessGuard
+│   │   ├── Dtos/             QuotationPipelineDto, ConversionDto, AgingDto, QuotationDetailDto, QuotationSummaryDto
+│   │   ├── Services/         QuotationAppService (GetPipelineAsync, GetConversionAsync, GetAgingAsync, GetByIdAsync, GetSummaryAsync)
 │   │   └── DependencyInjection.cs
 │   │
 │   ├── SalesDeliveryBI.Infrastructure     (depends on: Application + Domain)
@@ -59,20 +60,20 @@ SalesDeliveryBI.sln
 │   │   │   ├── EfCore/        AppDbContext (Code First, owns `sales` schema entities + migrations),
 │   │   │   │                  EntityConfigurations/ (Fluent API per entity), AuditableEntitySaveChangesInterceptor
 │   │   │   ├── Migrations/    EF Core migrations for `sales` schema + raw-SQL migrations for `bi` schema (MVs, refresh log, pg_cron)
-│   │   │   └── Dapper/        DapperContext, QuotationQueryRepository (reads bi.mv_sales_quotation_summary — read path stays Dapper, not EF, per MV performance rationale)
+│   │   │   └── Dapper/        DapperContext, QuotationRepository (reads bi.mv_sales_quotation_summary — read path stays Dapper, not EF, per MV performance rationale)
 │   │   ├── Caching/          RedisCacheService (cache-aside + stampede lock)
-│   │   ├── Security/         CurrentUserContext (reads JWT claims: user_units, role, sub → Guid userId)
-│   │   ├── Jobs/             (optional) CacheWarmupJob — Quartz.NET, triggered post pg_cron refresh
+│   │   ├── Security/         CurrentUserContext (reads JWT claims: sub, permissions, user_units), UnitAccessGuard (validates/resolves unitId against the claims)
+│   │   ├── Jobs/             CacheWarmupJob — Quartz.NET, triggered post pg_cron refresh
 │   │   └── DependencyInjection.cs
 │   │
 │   └── SalesDeliveryBI.Api                (composition root — depends on Application + Infrastructure)
-│       ├── Controllers/      QuotationsController (thin — sends MediatR queries)
+│       ├── Controllers/      QuotationsController (thin — calls QuotationAppService directly, no mediator indirection)
 │       ├── Middleware/       ExceptionHandling, JwtClaims
 │       ├── Program.cs
 │       └── appsettings.json
 │
 └── tests/
-    ├── SalesDeliveryBI.Application.Tests   (query handlers, mocked repo/cache)
+    ├── SalesDeliveryBI.Application.Tests   (QuotationAppService, mocked repo/cache/guard)
     └── SalesDeliveryBI.Infrastructure.Tests (Dapper queries + EF Core migrations against a test Postgres)
 ```
 
@@ -88,31 +89,52 @@ Api  →  Application  ───────────────────
 ```
 
 - **Domain** never references anything — entities are plain C# classes/EF-annotation-free (mapping lives in `Infrastructure/EfCore/EntityConfigurations`, not on the entities themselves).
-- **Application** defines interfaces (`IQuotationQueryRepository`, `ICacheService`) — never implements them.
+- **Application** defines interfaces (`IQuotationRepository`, `ICacheService`, `IUnitAccessGuard`) — never implements them.
 - **Infrastructure** implements Application's interfaces (Dapper/Redis/Npgsql) and owns the EF Core `AppDbContext` + migrations — Application never knows Dapper or EF Core exist.
 - **Api** is the only project that knows about both Application and Infrastructure — it wires DI in `Program.cs` and exposes HTTP.
 
 ---
 
-## Why CQRS-lite (MediatR) fits the read side
+## Why Plain AppServices (no MediatR)
 
-- Every one of the 5 dashboard endpoints (`pipeline`, `conversion`, `aging`, `{id}`, `summary`) is a **Query**, not a Command — there's no state to mutate through this API.
-- `UnitSecurityBehavior` and `CachingBehavior` as MediatR pipeline behaviors mean the row-level unit check and Redis cache-aside logic run **once, centrally, for every query** — a handler can't accidentally forget to apply them (satisfies the "no bypass path" rule in the repo's `CLAUDE.md`).
-- Controllers stay one-liners: `return Ok(await _mediator.Send(new GetQuotationPipelineQuery(unitId, from, to)));`
+- Demo project, single developer, 5 read-only endpoints — MediatR's Query/Handler-per-endpoint ceremony and pipeline behaviors add indirection without a payoff here.
+- `QuotationAppService` calls `IUnitAccessGuard` and `ICacheService` explicitly at the top of each method — same two things the old pipeline behaviors did, just as plain method calls instead of framework magic. Easier to step through in a debugger, one less package to explain.
+- Controllers stay one-liners: `return Ok(await _quotationAppService.GetPipelineAsync(unitId));`
+- **Known tradeoff:** since there's no pipeline forcing it, every new AppService method must remember to call the guard + cache helpers itself — there's no structural guarantee like MediatR behaviors gave. Acceptable for a single-owner demo; would need revisiting if this ever grows past that.
 
 ---
 
 ## Request Flow Example — `GET /api/sales/quotations/pipeline?unitId={guid}`
 
-1. Controller receives request, extracts JWT claims, sends `GetQuotationPipelineQuery(unitId, from, to)` via MediatR.
-2. `UnitSecurityBehavior` validates `unitId` against caller's `user_units` claim → throws `ForbiddenException` (mapped to `403`) if outside assignment.
-3. `CachingBehavior` checks Redis for `bi:sales:quotation:pipeline:unit:{unitId}:{date}` → cache hit short-circuits and returns immediately.
-4. On miss: handler calls `IQuotationQueryRepository.GetPipelineSummaryAsync(unitId)` → Dapper query against `bi.mv_sales_quotation_summary`.
-5. Result mapped to DTO (includes `lastRefresh` from `bi.mv_refresh_log`), cached by `CachingBehavior`, returned to controller.
+1. Controller receives request, calls `QuotationAppService.GetPipelineAsync(unitId)`.
+2. `QuotationAppService` calls `IUnitAccessGuard.Validate(unitId)` — reads `permissions`/`user_units` off `ICurrentUserContext`, resolves the effective unit scope, throws `ForbiddenAccessException` (mapped to `403`) if the requested unit is outside the caller's assignment and they lack `bi.quotation.viewAllUnits`.
+3. `QuotationAppService` calls `ICacheService.GetOrSetAsync("bi:sales:quotation:pipeline:unit:{unitId}:{date}", ttl, factory)` — cache hit returns immediately.
+4. On miss, the factory calls `IQuotationRepository.GetPipelineSummaryAsync(unitId)` → Dapper query against `bi.mv_sales_quotation_summary`.
+5. Result mapped to DTO (includes `lastRefresh` from `bi.mv_refresh_log`), cached, returned to controller.
 
 **Background/scheduled side (outside the request path):**
-- `pg_cron` inside Postgres refreshes each MV on its own cadence (3–15 min depending on the view) via `REFRESH MATERIALIZED VIEW CONCURRENTLY`.
-- Optional: a Quartz.NET job for cache warm-up right after refresh, if dashboards should be pre-warmed instead of first-request-pays-the-cost.
+- `pg_cron` inside Postgres refreshes each MV on its own cadence (3–15 min depending on the view) via `REFRESH MATERIALIZED VIEW CONCURRENTLY`. This is a Postgres extension, not a .NET package — requires `shared_preload_libraries = 'pg_cron'` in `postgresql.conf` and `CREATE EXTENSION pg_cron;`.
+- **Confirmed: Quartz.NET** for the cache warm-up job — runs inside the API process, fires shortly after each MV's `pg_cron` cadence, and pre-populates the Redis keys so the first dashboard request after a refresh never pays the cache-miss cost.
+
+### Cache Warm-up Job (Quartz.NET)
+
+Packages:
+```
+Quartz
+Quartz.Extensions.Hosting
+```
+
+- Registered in `Infrastructure/Jobs/CacheWarmupJob.cs`, wired via `services.AddQuartzHostedService()` in `Infrastructure/DependencyInjection.cs`.
+- One trigger per MV, offset ~10–15s after that MV's `pg_cron` cadence (e.g. quotation summary refreshes every 3 min → warm-up trigger at `*/3 * * * *` + 15s offset):
+
+  | MV / Dashboard | `pg_cron` Cadence | Quartz Warm-up Trigger |
+  |---|---|---|
+  | Pipeline (`mv_sales_quotation_summary`) | 3 min | every 3 min, +15s offset |
+  | Conversion (`mv_quotation_conversion_rate`) | 15 min | every 15 min, +15s offset |
+  | Aging (`mv_quotation_pipeline_daily`) | 15 min | every 15 min, +15s offset |
+
+- The job calls the same repository methods the API would (`IQuotationRepository`), populating Redis under the exact same cache keys `QuotationAppService` uses via `ICacheService` — no separate warm-up-specific key scheme, or the API would still miss on first request.
+- Job failures are logged (Serilog) but never throw past the job boundary — a failed warm-up just means the next real request pays the miss cost once; it must not crash the host.
 
 ---
 
@@ -146,7 +168,8 @@ Api  →  Application  ───────────────────
 
 ## Decisions Confirmed
 
-- **MediatR / CQRS-lite** for the query side.
+- **Plain AppService classes** for the query side — no MediatR/CQRS (dropped as overkill for a single-owner demo with 5 read-only endpoints).
 - **Serilog with rolling file sink** for all logging.
 - **EF Core Code First** for the `sales` OLTP schema — entities, migrations, audit interceptor.
 - **GUID primary keys** everywhere; `CreatedBy`/`ModifiedBy` as GUID references, `CreatedDate`/`ModifiedDate` on every table.
+- **Quartz.NET** for the cache warm-up job, triggered on an offset schedule after each MV's `pg_cron` refresh.

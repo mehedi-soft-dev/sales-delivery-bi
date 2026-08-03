@@ -4,18 +4,19 @@ Project-specific rules. These apply on top of the global engineering standard (s
 
 ---
 
-## 1. Architecture — Strict Layering (Clean Architecture, CQRS-lite)
+## 1. Architecture — Strict Layering (Clean Architecture, plain AppServices — no MediatR/CQRS)
 
 ```
-Controller → MediatR Query/Handler → Repository → Dapper (bi.* reads) / EF Core (sales schema + migrations)
+Controller → QuotationAppService → Repository → Dapper (bi.* reads) / EF Core (sales schema + migrations)
 ```
 
-- Controllers **never** touch `DbContext`, raw SQL, or Dapper directly. Controller only: extracts JWT claims, sends a MediatR query, returns the result.
-- Every dashboard endpoint is a **Query** (no Commands in this module — no create/edit AppServices).
-- `UnitSecurityBehavior` and `CachingBehavior` (MediatR pipeline behaviors) run centrally for every query — a handler cannot forget to apply row-level security or caching.
+- **No MediatR, no CQRS.** Demo project, single developer, 5 read-only endpoints — dropped as overkill. Plain `QuotationAppService` class with one method per dashboard.
+- Controllers **never** touch `DbContext`, raw SQL, or Dapper directly. Controller only: calls the AppService method, returns the result.
+- Every dashboard endpoint is a **read-only query method** (no Commands, no create/edit AppServices in this module).
+- Each `QuotationAppService` method **explicitly** calls `IUnitAccessGuard.Validate(unitId)` then `ICacheService.GetOrSetAsync(...)` — same responsibilities the old MediatR behaviors had, just as plain method calls. **No pipeline enforces this automatically** — every new method must remember to call both, by convention, not by structure.
 - Repositories are the only layer allowed to touch the database. All `bi.*` materialized-view reads go through Dapper — no EF change-tracking on read-only aggregates.
-- Row-level security (`user_units` filter) is enforced in `UnitSecurityBehavior`/repository layer, never in the controller, never trusted from the client. A user requesting a unit outside their assignment gets `403`, never a silently-empty result.
-- No bypass path: every query touching `bi.*` views applies the unit filter — no "admin shortcut" that skips it, even internally.
+- Row-level security (`user_units`/`permissions` claims) is enforced in `IUnitAccessGuard`, never in the controller, never trusted from the client. A user requesting a unit outside their assignment gets `403`, never a silently-empty result.
+- No bypass path by convention: every AppService method touching `bi.*` views must call the guard — treat skipping it as a bug, since nothing else catches it.
 - See `docs/plans/backend/architecture.md` for the full solution structure and dependency rule.
 
 ## 2. Database
@@ -25,6 +26,7 @@ Controller → MediatR Query/Handler → Repository → Dapper (bi.* reads) / EF
 - Every materialized view must have a `CREATE UNIQUE INDEX` on its natural key — required for `REFRESH MATERIALIZED VIEW CONCURRENTLY`. No MV ships without one.
 - Every refresh writes to `bi.mv_refresh_log`. Every dashboard API response includes `lastRefresh` sourced from this table.
 - FX/currency conversion: rate is snapshotted at transaction date, never recomputed at refresh time.
+- MV refresh scheduling = `pg_cron` (inside Postgres). Cache warm-up after each refresh = **Quartz.NET** (`Quartz`, `Quartz.Extensions.Hosting`), triggered on an offset schedule — see `docs/plans/backend/architecture.md` §Cache Warm-up Job.
 - Single migration pipeline: EF Core (`dotnet ef database update`) creates both schemas — `sales` tables from Code First entities, `bi` schema/MVs/pg_cron via a hand-written `migrationBuilder.Sql(...)` migration. No separate Flyway/DbUp tool.
 - Dev/test seed data (GUID-mapped from the 30-row guideline sample) lives in `docs/plans/database/seed-data.md` — loaded via a `DatabaseSeeder`, guarded to `IsDevelopment()` only, never in Production.
 
@@ -50,9 +52,10 @@ Controller → MediatR Query/Handler → Repository → Dapper (bi.* reads) / EF
 
 ## 5. Security
 
-- Role matrix (SuperAdmin, GeneralManager, CommercialManager, CommercialOfficer, Merchandiser, FinanceManager, Viewer) is enforced via policy-based authorization in ASP.NET Core — never via UI hiding alone. Hiding a button is not a security boundary.
-- JWT carries `role`, `user_units` (GUID array), `sub` (caller's user GUID). Nothing about access control is inferred from the frontend.
-- Full policy mapping: `docs/plans/security/security-plan.md`.
+- **Dynamic RBAC, owned by a separate Identity service** — this repo never creates/edits users, roles, or permissions. It only validates JWTs and checks permission claims.
+- Authorization is **permission-based, not role-name-based** (`RequireClaim("permission", "bi.quotation.view")`) — roles are admin-defined elsewhere, this API only knows permission codes.
+- JWT carries `sub` (caller's user GUID), `permissions` (array of permission codes), `user_units` (GUID array). Nothing about access control is inferred from the frontend.
+- Full policy mapping + permission codes: `docs/plans/security/security-plan.md`.
 
 ## 6. Logging — Serilog (file sink)
 
@@ -74,4 +77,5 @@ Controller → MediatR Query/Handler → Repository → Dapper (bi.* reads) / EF
 ## 8. Scope Discipline
 
 - This module is **read-only BI/reporting**. The `sales` schema is designed and migrated here (nothing pre-exists), but **no create/edit AppServices or entry UI are built** — data entry stays a separate future concern; dev data comes from the seed script only.
+- **User/Role/Permission management is explicitly out of scope here** — that's the separate Identity service/repo. Never add User/Role/Permission CRUD, login, or token-issuance endpoints to this solution.
 - Don't build Sales Order / Delivery / Invoice / Return dashboards unless explicitly scoped in — current phase is Sale Quotations only (Pipeline, Conversion/Win-Loss, Aging).
