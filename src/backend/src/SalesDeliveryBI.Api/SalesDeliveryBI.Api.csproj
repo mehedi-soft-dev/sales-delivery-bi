@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SalesDeliveryBI.Application\SalesDeliveryBI.Application.csproj" />
+    <ProjectReference Include="..\SalesDeliveryBI.Infrastructure\SalesDeliveryBI.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

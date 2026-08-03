@@ -6,12 +6,12 @@ Phased build order. Each phase should be functionally complete and buildable bef
 
 ## Phase 0 — Project Setup
 
-- [ ] Create solution `SalesDeliveryBI.sln`
-- [ ] Create projects: `Domain`, `Application`, `Infrastructure`, `Api`, `Application.Tests`, `Infrastructure.Tests`
-- [ ] Wire project references per the dependency rule (`Api → Infrastructure → Application → Domain`, `Api → Application`)
-- [ ] Add `.editorconfig` / analyzer rules (nullable reference types enabled, warnings-as-errors for the non-negotiables in `CLAUDE.md`)
-- [ ] Provision local PostgreSQL 15+ and Redis instances (docker-compose for dev)
-- [ ] `CREATE EXTENSION pg_cron;` on the dev database, confirm `shared_preload_libraries` includes `pg_cron`
+- [x] Create solution `SalesDeliveryBI.sln`
+- [x] Create projects: `Domain`, `Application`, `Infrastructure`, `Api`, `Application.Tests`, `Infrastructure.Tests`
+- [x] Wire project references per the dependency rule (`Api → Infrastructure → Application → Domain`, `Api → Application`)
+- [x] Add `.editorconfig` / analyzer rules (nullable reference types enabled, warnings-as-errors for the non-negotiables in `CLAUDE.md`)
+- [x] Provision local PostgreSQL 15+ and Redis instances (docker-compose for dev)
+- [x] `CREATE EXTENSION pg_cron;` on the dev database, confirm `shared_preload_libraries` includes `pg_cron`
 
 ## Phase 1 — Domain Layer
 

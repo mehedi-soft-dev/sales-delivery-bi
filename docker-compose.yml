@@ -1,0 +1,43 @@
+services:
+  postgres:
+    build:
+      context: ./docker/postgres
+    container_name: salesdeliverybi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: salesdeliverybi
+      POSTGRES_USER: salesdeliverybi
+      POSTGRES_PASSWORD: salesdeliverybi
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_cron
+      - -c
+      - cron.database_name=salesdeliverybi
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salesdeliverybi -d salesdeliverybi"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: salesdeliverybi-redis
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
