@@ -2,6 +2,8 @@
 
 Project-specific rules. These apply on top of the global engineering standard (senior-level, no shortcuts). Follow exactly — do not deviate without discussing first. Full detail lives in `docs/plans/`.
 
+**Priority order: access control and caching are the most important parts of this system.** Row-level unit security (`IUnitAccessGuard`, §1/§5) and Redis cache-aside + stampede protection (§3) are non-negotiable on every endpoint — get these right and keep them right before polishing dashboards or UI. Any change that touches a `QuotationAppService` method must not weaken either without discussing first.
+
 ---
 
 ## 1. Architecture — Strict Layering (Clean Architecture, plain AppServices — no MediatR/CQRS)
@@ -40,13 +42,15 @@ Controller → QuotationAppService → Repository → Dapper (bi.* reads) / EF C
 - Cache stampede protection required on every cached endpoint: short-lived Redis lock (`SET key NX PX 2000`) around recompute — never let a TTL expiry cause a thundering herd on Postgres.
 - Full request/response shape per endpoint: `docs/plans/api-contract.md`.
 
-## 4. Frontend — Angular 22 + AG Grid / PrimeNG
+## 4. Frontend — Angular 22 + AG Grid / PrimeNG / ApexCharts
 
 - **Always responsive.** Every dashboard, KPI card, grid, and chart must work correctly at mobile, tablet, and desktop breakpoints — no fixed-width layouts, no horizontal scroll on KPI card rows, grids scroll within their own container only.
 - Use Angular's standalone components + signals; no legacy NgModule sprawl for new features.
-- Verify AG Grid Angular wrapper + PrimeNG compatibility with Angular 22 before scaffolding — pin to the highest version both support if either lags.
+- Charts use **ApexCharts** via the `ng-apexcharts` wrapper (conversion trend line, win/loss bar, aging buckets bar) — grids stay AG Grid, cards/inputs stay PrimeNG.
+- Verify AG Grid Angular wrapper + PrimeNG + `ng-apexcharts` compatibility with Angular 22 before scaffolding — pin to the highest version all three support if one lags.
 - AG Grid / PrimeNG grid columns must have responsive column visibility (hide low-priority columns on narrow viewports) rather than shrinking illegibly.
-- Every dashboard shows a "Data as of {lastRefresh}" indicator — non-negotiable, sourced from the API response, never hardcoded.
+- Every dashboard shows a "Data as of {lastRefresh}" indicator — non-negotiable, sourced from the API response, never hardcoded. This is the frontend's visible proof that caching is working correctly — treat a wrong/stale value here as a caching bug, not a cosmetic one.
+- A `403` response is handled globally as a distinct "not authorized" state, never folded into a generic error page — access control must stay visible to the user, not silently swallowed.
 - No dashboard assumes real-time data. Loading and stale-data states must be handled explicitly (skeleton/spinner, not a blank screen).
 - Full structure: `docs/plans/frontend/architecture.md`.
 

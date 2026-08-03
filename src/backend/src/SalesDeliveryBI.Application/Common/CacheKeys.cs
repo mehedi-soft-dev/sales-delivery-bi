@@ -5,8 +5,9 @@ namespace SalesDeliveryBI.Application.Common;
 /// <summary>
 /// Cache key = dashboard name + hash of filter params, per docs/plans/backend/architecture.md.
 /// Unit ids are sorted so the same effective scope always hashes to the same key regardless of set order.
+/// Public so Infrastructure's CacheWarmupJob (Phase 8) can populate the exact same keys QuotationAppService reads.
 /// </summary>
-internal static class CacheKeys
+public static class CacheKeys
 {
     public static string Pipeline(UnitScope scope) => $"bi:sales:quotation:pipeline:{ScopeSegment(scope)}";
 

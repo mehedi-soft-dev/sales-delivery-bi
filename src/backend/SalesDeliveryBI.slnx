@@ -6,6 +6,7 @@
     <Project Path="src/SalesDeliveryBI.Infrastructure/SalesDeliveryBI.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/SalesDeliveryBI.Api.Tests/SalesDeliveryBI.Api.Tests.csproj" />
     <Project Path="tests/SalesDeliveryBI.Application.Tests/SalesDeliveryBI.Application.Tests.csproj" />
     <Project Path="tests/SalesDeliveryBI.Infrastructure.Tests/SalesDeliveryBI.Infrastructure.Tests.csproj" />
   </Folder>

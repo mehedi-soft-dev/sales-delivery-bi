@@ -2,9 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SalesDeliveryBI.Application.Abstractions;
+using SalesDeliveryBI.Infrastructure.Caching;
+using SalesDeliveryBI.Infrastructure.Jobs;
+using SalesDeliveryBI.Infrastructure.Persistence.Dapper;
 using SalesDeliveryBI.Infrastructure.Persistence.EfCore;
 using SalesDeliveryBI.Infrastructure.Persistence.EfCore.Seed;
 using SalesDeliveryBI.Infrastructure.Security;
+using StackExchange.Redis;
 
 namespace SalesDeliveryBI.Infrastructure;
 
@@ -12,8 +16,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Phase 7 replaces this with a request-scoped, JWT-claims-based implementation.
-        services.AddSingleton<ICurrentUserContext, SystemCurrentUserContext>();
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+        services.AddScoped<IUnitAccessGuard, UnitAccessGuard>();
+        services.AddQuotationAuthorizationPolicies();
 
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
 
@@ -27,6 +33,20 @@ public static class DependencyInjection
         });
 
         services.AddScoped<DatabaseSeeder>();
+
+        services.AddSingleton<DapperContext>();
+        services.AddScoped<IQuotationRepository, QuotationRepository>();
+
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            string redisConnectionString = configuration.GetConnectionString("Redis")
+                ?? throw new InvalidOperationException("Missing 'ConnectionStrings:Redis' configuration.");
+
+            return ConnectionMultiplexer.Connect(redisConnectionString);
+        });
+        services.AddSingleton<ICacheService, RedisCacheService>();
+
+        services.AddCacheWarmupJobs();
 
         return services;
     }

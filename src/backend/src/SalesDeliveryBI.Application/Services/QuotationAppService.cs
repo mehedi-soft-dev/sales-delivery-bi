@@ -11,12 +11,6 @@ namespace SalesDeliveryBI.Application.Services;
 /// </summary>
 public class QuotationAppService
 {
-    private static readonly TimeSpan PipelineTtl = TimeSpan.FromMinutes(3);
-    private static readonly TimeSpan ConversionTtl = TimeSpan.FromMinutes(15);
-    private static readonly TimeSpan AgingTtl = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan DetailTtl = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan SummaryTtl = TimeSpan.FromMinutes(5);
-
     private readonly IQuotationRepository _repository;
     private readonly ICacheService _cache;
     private readonly IUnitAccessGuard _unitAccessGuard;
@@ -34,7 +28,7 @@ public class QuotationAppService
 
         return await _cache.GetOrSetAsync(
             CacheKeys.Pipeline(scope),
-            PipelineTtl,
+            DashboardCacheTtls.Pipeline,
             ct => _repository.GetPipelineSummaryAsync(scope, ct),
             cancellationToken);
     }
@@ -49,7 +43,7 @@ public class QuotationAppService
 
         return await _cache.GetOrSetAsync(
             CacheKeys.Conversion(scope, fromDate, toDate),
-            ConversionTtl,
+            DashboardCacheTtls.Conversion,
             ct => _repository.GetConversionSummaryAsync(scope, fromDate, toDate, ct),
             cancellationToken);
     }
@@ -60,7 +54,7 @@ public class QuotationAppService
 
         return await _cache.GetOrSetAsync(
             CacheKeys.Aging(scope),
-            AgingTtl,
+            DashboardCacheTtls.Aging,
             ct => _repository.GetAgingSummaryAsync(scope, ct),
             cancellationToken);
     }
@@ -73,7 +67,7 @@ public class QuotationAppService
 
         return await _cache.GetOrSetAsync(
             CacheKeys.Detail(quotationId),
-            DetailTtl,
+            DashboardCacheTtls.Detail,
             ct => _repository.GetByIdAsync(quotationId, scope, ct),
             cancellationToken);
     }
@@ -84,7 +78,7 @@ public class QuotationAppService
 
         return await _cache.GetOrSetAsync(
             CacheKeys.Summary(scope),
-            SummaryTtl,
+            DashboardCacheTtls.Summary,
             ct => _repository.GetSummaryAsync(scope, ct),
             cancellationToken);
     }

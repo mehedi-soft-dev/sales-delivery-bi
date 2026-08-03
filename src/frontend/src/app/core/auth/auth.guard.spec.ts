@@ -1,0 +1,30 @@
+import { TestBed } from '@angular/core/testing';
+import { UrlTree, provideRouter } from '@angular/router';
+import { authGuard } from './auth.guard';
+import { CurrentUserService } from './current-user.service';
+import { fakeJwt } from './testing/fake-jwt';
+
+describe('authGuard', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [provideRouter([])],
+    });
+  });
+
+  it('allows navigation when authenticated', () => {
+    const token = fakeJwt({ sub: 'user-1', exp: Math.floor(Date.now() / 1000) + 3600 });
+    TestBed.inject(CurrentUserService).setToken(token);
+
+    const result = TestBed.runInInjectionContext(() => authGuard({} as never, {} as never));
+
+    expect(result).toBe(true);
+  });
+
+  it('redirects to /403 when not authenticated', () => {
+    const result = TestBed.runInInjectionContext(() => authGuard({} as never, {} as never));
+
+    expect(result).toBeInstanceOf(UrlTree);
+    expect((result as UrlTree).toString()).toBe('/403');
+  });
+});

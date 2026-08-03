@@ -4,7 +4,7 @@ BI/reporting layer for Sale Quotations — pipeline, conversion, and aging dashb
 
 ## Stack
 
-- Frontend: Angular + AG Grid / PrimeNG
+- Frontend: Angular + AG Grid / PrimeNG / ApexCharts
 - Backend: ASP.NET Core
 - Database: PostgreSQL (materialized views)
 - Cache: Redis
@@ -122,7 +122,7 @@ flowchart TB
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Frontend | Angular 17+, AG Grid (Community, upgrade to Enterprise if pivoting/grouping needed), ECharts or ngx-charts | Grid-heavy dashboards match AG Grid's strength |
+| Frontend | Angular 17+, AG Grid (Community, upgrade to Enterprise if pivoting/grouping needed), ApexCharts (`ng-apexcharts`) | Grid-heavy dashboards match AG Grid's strength |
 | API | ASP.NET Core 8, minimal-API or MVC controllers | Async all the way, no `.Result`/`.Wait()` |
 | ORM/Data access | EF Core for OLTP writes (not in this BI scope), **Dapper** for MV reads | MVs are flat/denormalized — Dapper avoids EF tracking overhead on read-only aggregates |
 | Database | PostgreSQL 15+ | Native `MATERIALIZED VIEW`, `pg_cron` for scheduled refresh |

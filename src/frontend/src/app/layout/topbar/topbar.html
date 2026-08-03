@@ -1,0 +1,40 @@
+<p-toolbar styleClass="topbar" ariaLabelledBy="app-brand">
+  <ng-template #start>
+    <button type="button" class="topbar__menu-btn" (click)="menuToggle.emit()" aria-label="Toggle navigation">
+      <svg data-p-icon="bars" size="20"></svg>
+    </button>
+    <span id="app-brand" class="topbar__brand">SalesDeliveryBI</span>
+  </ng-template>
+
+  <ng-template #end>
+    <span class="topbar__unit">
+      <svg data-p-icon="building" size="16"></svg>
+      {{ unitLabel() }}
+    </span>
+
+    <span class="topbar__user">
+      <button
+        type="button"
+        class="topbar__user-btn"
+        (click)="toggleUserMenu($event)"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="userMenuOpen()"
+        aria-label="User menu"
+      >
+        @if (userInitials()) {
+          <p-avatar [label]="userInitials()!" shape="circle" />
+        } @else {
+          <svg data-p-icon="user" size="20"></svg>
+        }
+      </button>
+
+      @if (userMenuOpen()) {
+        <div class="topbar__user-panel" role="menu">
+          <button type="button" role="menuitem" class="topbar__user-panel-item" (click)="onLogoutClick()">
+            Log out
+          </button>
+        </div>
+      }
+    </span>
+  </ng-template>
+</p-toolbar>

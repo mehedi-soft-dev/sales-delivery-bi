@@ -1,0 +1,14 @@
+<div class="shell">
+  @if (loadingIndicator.isLoading()) {
+    <div class="shell__loading-bar" aria-hidden="true"></div>
+  }
+
+  <app-topbar (menuToggle)="sidebarOpen.set(!sidebarOpen())" />
+  <app-sidebar [(mobileOpen)]="sidebarOpen" />
+
+  <main class="shell__content">
+    <router-outlet />
+  </main>
+
+  <app-footer />
+</div>
