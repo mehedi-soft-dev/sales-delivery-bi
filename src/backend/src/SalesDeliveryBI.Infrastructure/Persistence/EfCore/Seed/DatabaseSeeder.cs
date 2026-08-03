@@ -1,0 +1,331 @@
+using System.Globalization;
+using System.Reflection;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using SalesDeliveryBI.Domain.Entities;
+using SalesDeliveryBI.Domain.Enums;
+
+namespace SalesDeliveryBI.Infrastructure.Persistence.EfCore.Seed;
+
+/// <summary>
+/// Development-only dev/test dataset — see docs/plans/database/seed-data.md for the source table
+/// and the QuotationItem/QuotationStatusHistory generation rules implemented here.
+/// </summary>
+public class DatabaseSeeder
+{
+    private static readonly Guid SeedSystemUserId = Security.SystemCurrentUserContext.SystemUserId;
+
+    private static readonly (Guid Id, string Name, string Type)[] SeedUnits =
+    [
+        (Guid.Parse("11111111-1111-1111-1111-111111111101"), "Unit-1", "Knit"),
+        (Guid.Parse("11111111-1111-1111-1111-111111111102"), "Unit-2", "Woven"),
+        (Guid.Parse("11111111-1111-1111-1111-111111111103"), "Unit-3", "Sweater"),
+    ];
+
+    private static readonly (Guid Id, string Name)[] SeedBuyers =
+    [
+        (Guid.Parse("22222222-2222-2222-2222-222222222201"), "H&M"),
+        (Guid.Parse("22222222-2222-2222-2222-222222222202"), "Zara"),
+        (Guid.Parse("22222222-2222-2222-2222-222222222203"), "Primark"),
+        (Guid.Parse("22222222-2222-2222-2222-222222222204"), "C&A"),
+        (Guid.Parse("22222222-2222-2222-2222-222222222205"), "Mango"),
+        (Guid.Parse("22222222-2222-2222-2222-222222222206"), "Next"),
+    ];
+
+    private static readonly (Guid Id, string Name, string HomeUnitName)[] SeedMerchandisers =
+    [
+        (Guid.Parse("33333333-3333-3333-3333-333333333301"), "Fatema Begum", "Unit-1"),
+        (Guid.Parse("33333333-3333-3333-3333-333333333302"), "Jahid Hasan", "Unit-2"),
+        (Guid.Parse("33333333-3333-3333-3333-333333333303"), "Mehedi Hasan", "Unit-1"),
+        (Guid.Parse("33333333-3333-3333-3333-333333333304"), "Sumaiya Akter", "Unit-2"),
+    ];
+
+    private static readonly QuotationStatus[] ForwardStatusOrder =
+    [
+        QuotationStatus.Draft,
+        QuotationStatus.Submitted,
+        QuotationStatus.Negotiation,
+        QuotationStatus.PendingApproval,
+        QuotationStatus.Approved,
+        QuotationStatus.Converted,
+    ];
+
+    private static readonly Dictionary<string, (string Item1, string Item2)> ItemDescriptionsByUnitType =
+        new()
+        {
+            ["Knit"] = ("Men's T-Shirt", "Men's Polo Shirt"),
+            ["Woven"] = ("Men's Shirt", "Men's Pant"),
+            ["Sweater"] = ("Men's Sweater", "Men's Cardigan"),
+        };
+
+    private readonly AppDbContext _context;
+    private readonly ILogger<DatabaseSeeder> _logger;
+
+    public DatabaseSeeder(AppDbContext context, ILogger<DatabaseSeeder> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
+
+    public async Task SeedAsync(CancellationToken cancellationToken = default)
+    {
+        Dictionary<string, Unit> units = await SeedUnitsAsync(cancellationToken);
+        Dictionary<string, Buyer> buyers = await SeedBuyersAsync(cancellationToken);
+        Dictionary<string, Merchandiser> merchandisers = await SeedMerchandisersAsync(units, cancellationToken);
+
+        List<SeedQuotationRecord> records = LoadSeedRecords();
+
+        await SeedFxRatesAsync(records, cancellationToken);
+        await SeedQuotationsAsync(records, units, buyers, merchandisers, cancellationToken);
+
+        _logger.LogInformation("Database seeding complete: {UnitCount} units, {BuyerCount} buyers, {QuotationCount} quotations",
+            units.Count, buyers.Count, records.Count);
+    }
+
+    private async Task<Dictionary<string, Unit>> SeedUnitsAsync(CancellationToken cancellationToken)
+    {
+        Dictionary<string, Unit> existing = await _context.Units.ToDictionaryAsync(u => u.UnitName, cancellationToken);
+
+        foreach ((Guid id, string name, string type) in SeedUnits)
+        {
+            if (existing.ContainsKey(name))
+            {
+                continue;
+            }
+
+            var unit = new Unit { Id = id, UnitName = name, UnitType = type };
+            _context.Units.Add(unit);
+            existing[name] = unit;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return existing;
+    }
+
+    private async Task<Dictionary<string, Buyer>> SeedBuyersAsync(CancellationToken cancellationToken)
+    {
+        Dictionary<string, Buyer> existing = await _context.Buyers.ToDictionaryAsync(b => b.BuyerName, cancellationToken);
+
+        foreach ((Guid id, string name) in SeedBuyers)
+        {
+            if (existing.ContainsKey(name))
+            {
+                continue;
+            }
+
+            var buyer = new Buyer { Id = id, BuyerName = name };
+            _context.Buyers.Add(buyer);
+            existing[name] = buyer;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return existing;
+    }
+
+    private async Task<Dictionary<string, Merchandiser>> SeedMerchandisersAsync(
+        Dictionary<string, Unit> units,
+        CancellationToken cancellationToken)
+    {
+        Dictionary<string, Merchandiser> existing =
+            await _context.Merchandisers.ToDictionaryAsync(m => m.MerchandiserName, cancellationToken);
+
+        foreach ((Guid id, string name, string homeUnitName) in SeedMerchandisers)
+        {
+            if (existing.ContainsKey(name))
+            {
+                continue;
+            }
+
+            var merchandiser = new Merchandiser { Id = id, MerchandiserName = name, UnitId = units[homeUnitName].Id };
+            _context.Merchandisers.Add(merchandiser);
+            existing[name] = merchandiser;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return existing;
+    }
+
+    private async Task SeedFxRatesAsync(List<SeedQuotationRecord> records, CancellationToken cancellationToken)
+    {
+        HashSet<DateOnly> existingDates = (await _context.FxRates
+                .Where(f => f.CurrencyCode == "USD")
+                .Select(f => f.RateDate)
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        IEnumerable<DateOnly> distinctDates = records
+            .Select(r => DateOnly.Parse(r.QuotationDate, CultureInfo.InvariantCulture))
+            .Distinct();
+
+        foreach (DateOnly date in distinctDates)
+        {
+            if (existingDates.Contains(date))
+            {
+                continue;
+            }
+
+            _context.FxRates.Add(new FxRate { CurrencyCode = "USD", RateDate = date, RateToUsd = 1.0000m });
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedQuotationsAsync(
+        List<SeedQuotationRecord> records,
+        Dictionary<string, Unit> units,
+        Dictionary<string, Buyer> buyers,
+        Dictionary<string, Merchandiser> merchandisers,
+        CancellationToken cancellationToken)
+    {
+        HashSet<string> existingQuotationNos = (await _context.Quotations
+                .Select(q => q.QuotationNo)
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        foreach (SeedQuotationRecord record in records)
+        {
+            if (existingQuotationNos.Contains(record.QuotationNo))
+            {
+                continue;
+            }
+
+            Quotation quotation = BuildQuotation(record, units, buyers, merchandisers);
+            _context.Quotations.Add(quotation);
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private static Quotation BuildQuotation(
+        SeedQuotationRecord record,
+        Dictionary<string, Unit> units,
+        Dictionary<string, Buyer> buyers,
+        Dictionary<string, Merchandiser> merchandisers)
+    {
+        DateOnly quotationDate = DateOnly.Parse(record.QuotationDate, CultureInfo.InvariantCulture);
+        DateOnly? convertedDate = record.ConvertedDate is null
+            ? null
+            : DateOnly.Parse(record.ConvertedDate, CultureInfo.InvariantCulture);
+        QuotationStatus status = Enum.Parse<QuotationStatus>(record.Status);
+        Unit unit = units[record.UnitName];
+
+        var quotation = new Quotation
+        {
+            QuotationNo = record.QuotationNo,
+            QuotationDate = quotationDate,
+            BuyerId = buyers[record.BuyerName].Id,
+            MerchandiserId = merchandisers[record.MerchandiserName].Id,
+            UnitId = unit.Id,
+            StyleNo = record.StyleNo,
+            Season = record.Season,
+            CurrencyCode = "USD",
+            Value = record.Value,
+            Incoterm = "FOB",
+            PaymentTerm = "30 Days",
+            ValidUntil = quotationDate.AddDays(30),
+            Discount = 0m,
+            Status = status,
+            StatusDate = ToUtcMidnight(convertedDate ?? quotationDate),
+            ConvertedToSoNo = null,
+            ConvertedDate = convertedDate is null ? null : ToUtcMidnight(convertedDate.Value),
+            LostReason = record.LostReason,
+        };
+
+        foreach (QuotationItem item in BuildItems(record.StyleNo, record.Value, unit.UnitType))
+        {
+            quotation.Items.Add(item);
+        }
+
+        DateOnly historyEndDate = status == QuotationStatus.Converted && convertedDate.HasValue
+            ? convertedDate.Value
+            : quotationDate.AddDays(record.DaysOpen);
+
+        foreach (QuotationStatusHistory entry in BuildStatusHistory(status, quotationDate, historyEndDate))
+        {
+            quotation.StatusHistory.Add(entry);
+        }
+
+        return quotation;
+    }
+
+    private static IEnumerable<QuotationItem> BuildItems(string quotationStyleNo, decimal value, string unitType)
+    {
+        (string description1, string description2) = ItemDescriptionsByUnitType[unitType];
+
+        decimal qtyTotal = Math.Round(value / 6m / 100m) * 100m;
+        int qty1 = (int)(Math.Round(qtyTotal * 0.6m / 100m) * 100m);
+        decimal amount1 = qty1 * 6.00m;
+        decimal amount2 = value - amount1;
+        int qty2 = (int)Math.Max(10m, Math.Round(amount2 / 6m / 10m) * 10m);
+        decimal unitPrice2 = Math.Round(amount2 / qty2, 2);
+
+        yield return new QuotationItem
+        {
+            StyleNo = $"{quotationStyleNo}-01",
+            ItemDescription = description1,
+            Qty = qty1,
+            UnitPrice = 6.00m,
+            Amount = amount1,
+        };
+
+        yield return new QuotationItem
+        {
+            StyleNo = $"{quotationStyleNo}-02",
+            ItemDescription = description2,
+            Qty = qty2,
+            UnitPrice = unitPrice2,
+            Amount = amount2,
+        };
+    }
+
+    private static IEnumerable<QuotationStatusHistory> BuildStatusHistory(
+        QuotationStatus status,
+        DateOnly startDate,
+        DateOnly endDate)
+    {
+        QuotationStatus[] stages = BuildHistoryStages(status);
+
+        for (int i = 0; i < stages.Length; i++)
+        {
+            DateOnly date = stages.Length == 1
+                ? startDate
+                : startDate.AddDays((endDate.DayNumber - startDate.DayNumber) * i / (stages.Length - 1));
+
+            yield return new QuotationStatusHistory
+            {
+                Status = stages[i],
+                StatusDate = ToUtcMidnight(date),
+            };
+        }
+    }
+
+    private static DateTime ToUtcMidnight(DateOnly date) =>
+        DateTime.SpecifyKind(date.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+
+    private static QuotationStatus[] BuildHistoryStages(QuotationStatus status)
+    {
+        if (status is QuotationStatus.Rejected or QuotationStatus.Expired)
+        {
+            return [QuotationStatus.Draft, QuotationStatus.Submitted, QuotationStatus.Negotiation, status];
+        }
+
+        int index = Array.IndexOf(ForwardStatusOrder, status);
+        return ForwardStatusOrder[..(index + 1)];
+    }
+
+    private static readonly JsonSerializerOptions SeedJsonOptions = new() { PropertyNameCaseInsensitive = true };
+
+    private static List<SeedQuotationRecord> LoadSeedRecords()
+    {
+        Assembly assembly = typeof(DatabaseSeeder).Assembly;
+        const string resourceName = "SalesDeliveryBI.Infrastructure.Persistence.EfCore.Seed.seed-quotations.json";
+
+        using Stream stream = assembly.GetManifestResourceStream(resourceName)
+            ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' not found.");
+
+        List<SeedQuotationRecord>? records = JsonSerializer.Deserialize<List<SeedQuotationRecord>>(stream, SeedJsonOptions);
+
+        return records ?? throw new InvalidOperationException("Seed quotations resource deserialized to null.");
+    }
+}

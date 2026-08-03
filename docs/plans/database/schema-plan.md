@@ -76,17 +76,46 @@ public class Quotation : BaseEntity
     public Merchandiser Merchandiser { get; set; }
     public Guid UnitId { get; set; }
     public Unit Unit { get; set; }
-    public string StyleNo { get; set; }
+    public string StyleNo { get; set; }            // lead/summary style — line-level detail lives in QuotationItem
     public string Season { get; set; }
     public string CurrencyCode { get; set; }
-    public decimal Value { get; set; }
-    public QuotationStatus Status { get; set; }   // enum: Draft, Submitted, Negotiation, Approved, Rejected, Expired, Converted
+    public decimal Value { get; set; }             // net total after Discount; Subtotal = Value + Discount, computed at read time
+    public string Incoterm { get; set; }           // e.g. FOB
+    public string PaymentTerm { get; set; }         // e.g. "30 Days"
+    public DateOnly ValidUntil { get; set; }
+    public decimal Discount { get; set; }
+    public QuotationStatus Status { get; set; }   // enum: Draft, Submitted, Negotiation, PendingApproval, Approved, Rejected, Expired, Converted
     public DateTime StatusDate { get; set; }
     public string? ConvertedToSoNo { get; set; }   // reference only — Sales Order module owns the actual entity, out of scope here
     public DateTime? ConvertedDate { get; set; }
     public string? LostReason { get; set; }
+
+    public ICollection<QuotationItem> Items { get; set; }
+    public ICollection<QuotationStatusHistory> StatusHistory { get; set; }
+}
+
+public class QuotationItem : BaseEntity
+{
+    public Guid QuotationId { get; set; }
+    public Quotation Quotation { get; set; }
+    public string StyleNo { get; set; }
+    public string ItemDescription { get; set; }
+    public int Qty { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal Amount { get; set; }
+}
+
+public class QuotationStatusHistory : BaseEntity
+{
+    public Guid QuotationId { get; set; }
+    public Quotation Quotation { get; set; }
+    public QuotationStatus Status { get; set; }
+    public DateTime StatusDate { get; set; }
+    public string? Note { get; set; }
 }
 ```
+
+`QuotationItem`/`QuotationStatusHistory` back the Quotation Details drill-in view (line items grid, status timeline) — they don't feed `bi.mv_sales_quotation_summary` or the two supporting MVs, which stay header-level for the Pipeline/Conversion/Aging dashboards. Detail-view queries join these tables directly (Dapper), not through the MVs.
 
 **Fluent API configuration** (in `Infrastructure/Persistence/EfCore/EntityConfigurations/*Configuration.cs`, not on the entities themselves):
 - `ToTable("quotations", "sales")` per entity, mapping to the `sales` schema explicitly.

@@ -15,27 +15,27 @@ Phased build order. Each phase should be functionally complete and buildable bef
 
 ## Phase 1 — Domain Layer
 
-- [ ] `BaseEntity` (Id: Guid, CreatedBy, CreatedDate, ModifiedBy, ModifiedDate) — `CreatedBy`/`ModifiedBy` are bare GUIDs with **no local FK**; the identity they reference lives in the separate Identity service, not this schema
-- [ ] Entities: `Unit`, `Buyer`, `Merchandiser`, `FxRate`, `Quotation` — **no `User`/`UserUnit` entities here**, those are owned by the Identity service (see `docs/plans/security/security-plan.md` §6)
-- [ ] Enums: `QuotationStatus`
-- [ ] Value Objects: `Money`, `DateRange` (if used)
-- [ ] `Result<T>` / guard clause helpers in `Common/`
+- [x] `BaseEntity` (Id: Guid, CreatedBy, CreatedDate, ModifiedBy, ModifiedDate) — `CreatedBy`/`ModifiedBy` are bare GUIDs with **no local FK**; the identity they reference lives in the separate Identity service, not this schema
+- [x] Entities: `Unit`, `Buyer`, `Merchandiser`, `FxRate`, `Quotation` — **no `User`/`UserUnit` entities here**, those are owned by the Identity service (see `docs/plans/security/security-plan.md` §6)
+- [x] Enums: `QuotationStatus`
+- [ ] Value Objects: `Money`, `DateRange` (if used) — skipped: nothing in Phase 1 consumes them (`Quotation` uses raw `CurrencyCode`/`Value` per `database/schema-plan.md`); revisit if a later phase needs them
+- [x] `Result<T>` / guard clause helpers in `Common/`
 
 ## Phase 2 — Database: EF Core Code First (`sales` schema)
 
-- [ ] `AppDbContext` in `Infrastructure/Persistence/EfCore`
-- [ ] Entity Fluent API configurations (one file per entity) — table/schema mapping, unique constraints (`QuotationNo`), enum-as-string conversions
-- [ ] `AuditableEntitySaveChangesInterceptor` — auto-populates `CreatedBy`/`CreatedDate`/`ModifiedBy`/`ModifiedDate`
-- [ ] `dotnet ef migrations add InitialCreate` — verify generated SQL creates all `sales` tables with GUID PKs
-- [ ] Hand-written migration `AddBiSchemaAndViews` — `CREATE SCHEMA bi`, all 3 materialized views + unique indexes, `bi.mv_refresh_log`, `pg_cron` schedule statements
-- [ ] `dotnet ef database update` — confirm both schemas exist end-to-end on a clean database
+- [x] `AppDbContext` in `Infrastructure/Persistence/EfCore`
+- [x] Entity Fluent API configurations (one file per entity) — table/schema mapping, unique constraints (`QuotationNo`), enum-as-string conversions
+- [x] `AuditableEntitySaveChangesInterceptor` — auto-populates `CreatedBy`/`CreatedDate`/`ModifiedBy`/`ModifiedDate`
+- [x] `dotnet ef migrations add InitialCreate` — verify generated SQL creates all `sales` tables with GUID PKs
+- [x] Hand-written migration `AddBiSchemaAndViews` — `CREATE SCHEMA bi`, all 3 materialized views + unique indexes, `bi.mv_refresh_log`, `pg_cron` schedule statements
+- [x] `dotnet ef database update` — confirm both schemas exist end-to-end on a clean database
 
 ## Phase 3 — Seed Data
 
-- [ ] `seed-quotations.json` (or equivalent) — 30-row dataset per `docs/plans/database/seed-data.md`
-- [ ] `DatabaseSeeder` class — idempotent upsert by natural key
-- [ ] Wire seeder to run only when `IsDevelopment()`
-- [ ] Manually refresh MVs once after first seed run, confirm dashboards would have data
+- [x] `seed-quotations.json` (or equivalent) — 30-row dataset per `docs/plans/database/seed-data.md`
+- [x] `DatabaseSeeder` class — idempotent upsert by natural key
+- [x] Wire seeder to run only when `IsDevelopment()`
+- [x] Manually refresh MVs once after first seed run, confirm dashboards would have data
 
 ## Phase 4 — Application Layer (plain AppServices, no MediatR)
 

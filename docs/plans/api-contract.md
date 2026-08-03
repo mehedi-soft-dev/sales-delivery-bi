@@ -36,6 +36,7 @@ KPI cards + open-quotations grid for the Pipeline dashboard.
       { "status": "Draft", "count": 5 },
       { "status": "Submitted", "count": 8 },
       { "status": "Negotiation", "count": 6 },
+      { "status": "PendingApproval", "count": 7 },
       { "status": "Approved", "count": 4 },
       { "status": "Converted", "count": 3 }
     ],
@@ -135,13 +136,13 @@ KPI cards + aging buckets + aged-quotations grid for the Aging dashboard.
 
 ## 4. `GET /api/sales/quotations/{id}`
 
-Single quotation detail (full `mv_sales_quotation_summary` row).
+Single quotation detail. Header fields come from `mv_sales_quotation_summary`; `items` and `statusHistory` are queried directly from `sales.QuotationItems`/`sales.QuotationStatusHistories` (Dapper), not from the MVs. `discountUsd`/`subtotalUsd` are FX-converted like the rest of the header; `items[].unitPrice`/`amount` are **not** — they're in `currencyCode`, matching the OLTP line-item rows (only the header total gets FX-converted today).
 
 **Response 200:**
 ```json
 {
   "data": {
-    "quotationId": 1007,
+    "quotationId": "9c4d2e11-8a2b-4f3e-9a1a-5b6c7d8e9f01",
     "quotationNo": "QTN-2026-0007",
     "quotationDate": "2026-06-28",
     "buyerName": "Next",
@@ -151,6 +152,11 @@ Single quotation detail (full `mv_sales_quotation_summary` row).
     "season": "SS26",
     "currencyCode": "USD",
     "quotationValueUsd": 45000,
+    "incoterm": "FOB",
+    "paymentTerm": "30 Days",
+    "validUntil": "2026-07-27",
+    "discountUsd": 5000,
+    "subtotalUsd": 50000,
     "status": "Negotiation",
     "statusDate": "2026-07-15",
     "daysInStatus": 19,
@@ -159,7 +165,16 @@ Single quotation detail (full `mv_sales_quotation_summary` row).
     "convertedDate": null,
     "conversionDays": null,
     "lostReason": null,
-    "createdBy": "7b2e1a4c-1234-4a5b-8c9d-0e1f2a3b4c5d"
+    "createdBy": "7b2e1a4c-1234-4a5b-8c9d-0e1f2a3b4c5d",
+    "items": [
+      { "styleNo": "ST-1001", "itemDescription": "Men's Shirt", "qty": 5000, "unitPrice": 5.50, "amount": 27500 },
+      { "styleNo": "ST-1002", "itemDescription": "Men's Pant", "qty": 3000, "unitPrice": 6.00, "amount": 18000 }
+    ],
+    "statusHistory": [
+      { "status": "Draft", "statusDate": "2026-06-28" },
+      { "status": "Submitted", "statusDate": "2026-06-29" },
+      { "status": "Negotiation", "statusDate": "2026-07-02" }
+    ]
   },
   "lastRefresh": "2026-08-03T09:12:00Z"
 }
