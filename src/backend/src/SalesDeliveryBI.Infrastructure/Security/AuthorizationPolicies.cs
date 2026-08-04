@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SalesDeliveryBI.Application.Common;
 
 namespace SalesDeliveryBI.Infrastructure.Security;
 
@@ -11,6 +12,7 @@ public static class AuthorizationPolicies
     public const string QuotationRead = "QuotationRead";
     public const string QuotationReadAllUnits = "QuotationReadAllUnits";
     public const string AdminRead = "AdminRead";
+    public const string AdminWrite = "AdminWrite";
 
     /// <summary>
     /// Claim type carrying permission codes in the JWT. security-plan.md's own §2 (claim contract) and §3
@@ -31,6 +33,9 @@ public static class AuthorizationPolicies
 
             options.AddPolicy(AdminRead, policy =>
                 policy.RequireClaim(PermissionClaimType, PermissionCodes.AdminView));
+
+            options.AddPolicy(AdminWrite, policy =>
+                policy.RequireClaim(PermissionClaimType, PermissionCodes.AdminManage));
         });
 
         return services;

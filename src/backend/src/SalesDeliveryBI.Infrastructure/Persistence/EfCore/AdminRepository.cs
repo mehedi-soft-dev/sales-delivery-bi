@@ -64,4 +64,33 @@ public class AdminRepository : IAdminRepository
             .OrderBy(p => p.PermissionCode)
             .ToList();
     }
+
+    public async Task<AdminRoleDto?> SetRolePermissionsAsync(
+        Guid roleId, IReadOnlyList<string> permissionCodes, CancellationToken cancellationToken)
+    {
+        Role? role = await _context.Roles
+            .Include(r => r.RolePermissions)
+            .FirstOrDefaultAsync(r => r.Id == roleId, cancellationToken);
+
+        if (role is null)
+        {
+            return null;
+        }
+
+        HashSet<string> desired = permissionCodes.ToHashSet();
+        List<RolePermission> toRemove = role.RolePermissions.Where(rp => !desired.Contains(rp.PermissionCode)).ToList();
+        HashSet<string> current = role.RolePermissions.Select(rp => rp.PermissionCode).ToHashSet();
+
+        _context.RolePermissions.RemoveRange(toRemove);
+        foreach (string code in desired.Where(code => !current.Contains(code)))
+        {
+            _context.RolePermissions.Add(new RolePermission { RoleId = roleId, PermissionCode = code });
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        int userCount = await _context.Users.CountAsync(u => u.RoleId == roleId, cancellationToken);
+
+        return new AdminRoleDto(role.Id, role.Name, userCount, desired.OrderBy(code => code).ToList());
+    }
 }

@@ -1,5 +1,6 @@
 <div class="pipeline-page">
   <app-page-header title="Quotation Pipeline" subtitle="Track and manage all quotations across your organization" icon="chart-line">
+    <app-include-draft-toggle [(checked)]="includeDraft" />
     <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
   </app-page-header>
 
@@ -27,9 +28,15 @@
       <app-kpi-card label="Avg. Days Open" [value]="pipeline.kpis.avgDaysOpen | daysOpen" icon="calendar-clock" accent="blue" />
     </div>
 
-    <div class="dashboard-card">
-      <h2>Quotations by Status</h2>
-      <app-status-funnel-chart [entries]="pipeline.statusFunnel" />
+    <div class="dashboard-charts">
+      <div class="dashboard-card">
+        <h2>Quotations by Status</h2>
+        <app-status-funnel-chart [entries]="pipeline.statusFunnel" />
+      </div>
+      <div class="dashboard-card">
+        <h2>Value by Status</h2>
+        <app-status-value-chart [entries]="pipeline.statusFunnel" />
+      </div>
     </div>
 
     <div class="dashboard-card__header">
@@ -37,7 +44,13 @@
       <span class="dashboard-card__count-badge">{{ pipeline.openQuotations.totalCount }} Records</span>
     </div>
     <div class="dashboard-card dashboard-card--table">
-      <app-pipeline-grid [page]="pipeline.openQuotations" [loading]="service.loading()" (lazyLoad)="onLazyLoad($event)" />
+      <app-pipeline-grid
+        [page]="pipeline.openQuotations"
+        [loading]="service.loading()"
+        [sortField]="grid().sortField"
+        [sortOrder]="grid().sortDescending ? -1 : 1"
+        (lazyLoad)="onLazyLoad($event)"
+      />
     </div>
   }
 </div>

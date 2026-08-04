@@ -1,5 +1,6 @@
 <div class="aging-page">
   <app-page-header title="Aging" subtitle="Open quotations by age, with high-risk exposure surfaced first" icon="clock">
+    <app-include-draft-toggle [(checked)]="includeDraft" />
     <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
   </app-page-header>
 

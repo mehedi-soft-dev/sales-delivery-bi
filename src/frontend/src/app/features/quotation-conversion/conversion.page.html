@@ -3,7 +3,7 @@
     <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
   </app-page-header>
 
-  <app-date-range-filter (filterChange)="onDateRangeChange($event)" />
+  <app-date-range-filter [initialValue]="defaultDateRange" (filterChange)="onDateRangeChange($event)" />
 
   @if (service.loading() && !service.data()) {
     <app-loading-skeleton [kpiCount]="4" [contentBlockHeights]="[280, 280, 320]" />
@@ -31,12 +31,17 @@
 
     <div class="dashboard-charts">
       <div class="dashboard-card">
-        <h2>Conversion Rate Trend</h2>
+        <h2>Won vs Lost Trend</h2>
         <app-conversion-trend-chart [trend]="conversion.monthlyTrend" />
       </div>
       <div class="dashboard-card">
         <h2>Won vs Lost Value</h2>
-        <app-win-loss-chart [wonValueUsd]="conversion.kpis.wonValueUsd" [lostValueUsd]="conversion.kpis.lostValueUsd" />
+        <app-win-loss-chart
+          [wonValueUsd]="conversion.kpis.wonValueUsd"
+          [lostValueUsd]="conversion.kpis.lostValueUsd"
+          [wonCount]="conversion.kpis.wonCount"
+          [lostCount]="conversion.kpis.lostCount"
+        />
       </div>
     </div>
 

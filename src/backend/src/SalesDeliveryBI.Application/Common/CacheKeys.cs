@@ -9,20 +9,27 @@ namespace SalesDeliveryBI.Application.Common;
 /// </summary>
 public static class CacheKeys
 {
-    public static string Pipeline(UnitScope scope) => $"bi:sales:quotation:pipeline:{ScopeSegment(scope)}";
+    public static string Pipeline(UnitScope scope, bool includeDraft, DateOnly? fromDate, DateOnly? toDate) =>
+        $"bi:sales:quotation:pipeline:{ScopeSegment(scope)}:draft:{includeDraft}:{DateRangeSegment(fromDate, toDate)}";
 
     public static string Conversion(UnitScope scope, DateOnly fromDate, DateOnly toDate) =>
         $"bi:sales:quotation:conversion:{ScopeSegment(scope)}:{Fmt(fromDate)}:{Fmt(toDate)}";
 
-    public static string Aging(UnitScope scope) => $"bi:sales:quotation:aging:{ScopeSegment(scope)}";
+    public static string Aging(UnitScope scope, bool includeDraft, DateOnly? fromDate, DateOnly? toDate) =>
+        $"bi:sales:quotation:aging:{ScopeSegment(scope)}:draft:{includeDraft}:{DateRangeSegment(fromDate, toDate)}";
 
     public static string Detail(Guid quotationId) => $"bi:sales:quotation:detail:{quotationId}";
 
     public static string Summary(UnitScope scope) => $"bi:sales:quotation:summary:{ScopeSegment(scope)}";
 
+    public static string Units(UnitScope scope) => $"bi:sales:quotation:units:{ScopeSegment(scope)}";
+
     private static string ScopeSegment(UnitScope scope) => scope.IsUnrestricted
         ? "unit:all"
         : $"unit:{string.Join(',', scope.UnitIds.OrderBy(id => id))}";
+
+    private static string DateRangeSegment(DateOnly? fromDate, DateOnly? toDate) =>
+        $"{(fromDate.HasValue ? Fmt(fromDate.Value) : "any")}:{(toDate.HasValue ? Fmt(toDate.Value) : "any")}";
 
     private static string Fmt(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 }

@@ -13,4 +13,5 @@ public class CacheTtlOptions
     public TimeSpan Aging { get; set; } = TimeSpan.FromMinutes(5);
     public TimeSpan Detail { get; set; } = TimeSpan.FromMinutes(5);
     public TimeSpan Summary { get; set; } = TimeSpan.FromMinutes(5);
+    public TimeSpan Units { get; set; } = TimeSpan.FromMinutes(30);
 }

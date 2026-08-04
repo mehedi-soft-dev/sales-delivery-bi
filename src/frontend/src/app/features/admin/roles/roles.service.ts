@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import type { AdminRoleDto, PagedResult } from '../../../core/models/dashboard.models';
 import { appendGridParams, type GridQuery } from '../../../shared/data/grid-query';
@@ -21,5 +22,9 @@ export class RolesService {
 
   load(grid: GridQuery): void {
     this.query.load(grid);
+  }
+
+  updateRolePermissions(roleId: string, permissionCodes: string[]): Observable<AdminRoleDto> {
+    return this.http.put<AdminRoleDto>(`${ROLES_ENDPOINT}/${roleId}/permissions`, { permissionCodes });
   }
 }

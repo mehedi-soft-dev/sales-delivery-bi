@@ -109,6 +109,13 @@ body {
 }
 
 .p-datatable-paginator-bottom,
-.p-datatable-paginator-top {
+.p-datatable-paginator-top,
+.p-paginator {
+  font-size: 0.8125rem;
+}
+
+/* The paginator's "Showing X to Y of Z results" text doesn't inherit from .p-paginator above —
+   PrimeNG's Aura theme renders it at the 16px root default regardless of ancestor font-size. */
+.p-paginator-current {
   font-size: 0.8125rem;
 }

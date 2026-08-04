@@ -5,11 +5,13 @@ import { DataAsOf } from '../../shared/components/data-as-of/data-as-of';
 import { KpiCard } from '../../shared/components/kpi-card/kpi-card';
 import { LoadingSkeleton } from '../../shared/components/loading-skeleton/loading-skeleton';
 import { PageHeader } from '../../shared/components/page-header/page-header';
+import { IncludeDraftToggle } from '../../shared/components/include-draft-toggle/include-draft-toggle';
 import { DEFAULT_GRID_QUERY, gridQueryFromLazyLoadEvent, type GridQuery, type TableLazyLoadEvent } from '../../shared/data/grid-query';
 import { UnitFilterStore } from '../../core/filters/unit-filter.store';
 import { PipelineGridComponent } from './pipeline-grid.component';
 import { PipelineService } from './pipeline.service';
 import { StatusFunnelChartComponent } from './status-funnel-chart.component';
+import { StatusValueChartComponent } from './status-value-chart.component';
 
 @Component({
   selector: 'app-pipeline-page',
@@ -18,7 +20,9 @@ import { StatusFunnelChartComponent } from './status-funnel-chart.component';
     KpiCard,
     LoadingSkeleton,
     PageHeader,
+    IncludeDraftToggle,
     StatusFunnelChartComponent,
+    StatusValueChartComponent,
     PipelineGridComponent,
     CurrencyUsdPipe,
     DaysOpenPipe,
@@ -30,11 +34,12 @@ export class PipelinePage {
   protected readonly service = inject(PipelineService);
   private readonly unitFilterStore = inject(UnitFilterStore);
 
-  protected readonly grid = signal<GridQuery>(DEFAULT_GRID_QUERY);
+  protected readonly grid = signal<GridQuery>({ ...DEFAULT_GRID_QUERY, sortField: 'quotationNo', sortDescending: true });
+  protected readonly includeDraft = signal(false);
 
   constructor() {
     effect(() => {
-      this.service.load({ unitId: this.unitFilterStore.unitId(), grid: this.grid() });
+      this.service.load({ unitId: this.unitFilterStore.unitId(), includeDraft: this.includeDraft(), grid: this.grid() });
     });
   }
 
@@ -43,7 +48,7 @@ export class PipelinePage {
   }
 
   protected onRefresh(): void {
-    this.service.load({ unitId: this.unitFilterStore.unitId(), grid: this.grid() });
+    this.service.load({ unitId: this.unitFilterStore.unitId(), includeDraft: this.includeDraft(), grid: this.grid() });
   }
 
   /** KPI counts arrive as `number | string` (System.Text.Json decimal/int quirk) — normalize before display. */

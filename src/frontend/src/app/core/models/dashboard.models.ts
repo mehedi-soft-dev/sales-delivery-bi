@@ -15,6 +15,7 @@ export interface PagedResult<T> {
 
 export type QuotationDetailDto = components['schemas']['QuotationDetailDto'];
 export type QuotationSummaryDto = components['schemas']['QuotationSummaryDto'];
+export type UnitOptionDto = components['schemas']['UnitOptionDto'];
 
 export type OpenQuotationDto = components['schemas']['OpenQuotationDto'];
 export type AgedQuotationDto = components['schemas']['AgedQuotationDto'];

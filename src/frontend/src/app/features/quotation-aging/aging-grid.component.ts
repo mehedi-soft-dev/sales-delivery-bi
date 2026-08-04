@@ -15,5 +15,7 @@ import { DaysOpenPipe } from '../../shared/pipes/days-open.pipe';
 export class AgingGridComponent {
   readonly page = input.required<PagedResult<AgedQuotationDto>>();
   readonly loading = input(false);
+  readonly sortField = input<string | null>(null);
+  readonly sortOrder = input(1);
   readonly lazyLoad = output<TableLazyLoadEvent>();
 }

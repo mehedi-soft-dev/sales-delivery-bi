@@ -53,13 +53,8 @@ export const NAV_TREE: readonly NavNode[] = [
           { kind: 'leaf', label: 'Aging', iconName: 'clock', path: '/aging' },
         ],
       },
-      { kind: 'leaf', label: 'Sales Orders', iconName: 'shopping-cart', path: '/dashboard/sales-orders', placeholder: true },
-      { kind: 'leaf', label: 'Delivery / Challan', iconName: 'truck', path: '/dashboard/delivery', placeholder: true },
-      { kind: 'leaf', label: 'Sales Invoice', iconName: 'receipt', path: '/dashboard/invoice', placeholder: true },
-      { kind: 'leaf', label: 'Return / Credit Note', iconName: 'reply', path: '/dashboard/return', placeholder: true },
     ],
   },
-  { kind: 'leaf', label: 'Report', iconName: 'chart-pie', path: '/reports', placeholder: true },
   {
     kind: 'group',
     label: 'Admin',

@@ -22,6 +22,7 @@ public class CacheWarmupJob : IJob
     public const string QuotationConversionRateMv = "bi.mv_quotation_conversion_rate";
 
     private static readonly UnitScope UnrestrictedScope = UnitScope.Unrestricted();
+    private static readonly bool[] FalseThenTrue = [false, true];
 
     private readonly IQuotationRepository _repository;
     private readonly ICacheService _cache;
@@ -74,17 +75,31 @@ public class CacheWarmupJob : IJob
     // Return type is deliberately the non-generic Task, not Task<DashboardResponse<T>> — WarmAsync's switch
     // expression above calls these three plus LogUnknownMvAsync as one common type; T differs per MV.
 #pragma warning disable CA1859
-    private Task WarmPipelineAsync(CancellationToken cancellationToken) => _cache.GetOrSetAsync(
-        CacheKeys.Pipeline(UnrestrictedScope),
-        _cacheTtls.Pipeline,
-        ct => _repository.GetPipelineSummaryAsync(UnrestrictedScope, ct),
-        cancellationToken);
+    // Only the unfiltered (fromDate/toDate = null) variant is warmed — dates are arbitrary user-chosen
+    // input, same reason WarmConversionAsync only warms the current month rather than every possible range.
+    private async Task WarmPipelineAsync(CancellationToken cancellationToken)
+    {
+        foreach (bool includeDraft in FalseThenTrue)
+        {
+            await _cache.GetOrSetAsync(
+                CacheKeys.Pipeline(UnrestrictedScope, includeDraft, null, null),
+                _cacheTtls.Pipeline,
+                ct => _repository.GetPipelineSummaryAsync(UnrestrictedScope, includeDraft, null, null, ct),
+                cancellationToken);
+        }
+    }
 
-    private Task WarmAgingAsync(CancellationToken cancellationToken) => _cache.GetOrSetAsync(
-        CacheKeys.Aging(UnrestrictedScope),
-        _cacheTtls.Aging,
-        ct => _repository.GetAgingSummaryAsync(UnrestrictedScope, ct),
-        cancellationToken);
+    private async Task WarmAgingAsync(CancellationToken cancellationToken)
+    {
+        foreach (bool includeDraft in FalseThenTrue)
+        {
+            await _cache.GetOrSetAsync(
+                CacheKeys.Aging(UnrestrictedScope, includeDraft, null, null),
+                _cacheTtls.Aging,
+                ct => _repository.GetAgingSummaryAsync(UnrestrictedScope, includeDraft, null, null, ct),
+                cancellationToken);
+        }
+    }
 
     private Task WarmConversionAsync(CancellationToken cancellationToken)
     {

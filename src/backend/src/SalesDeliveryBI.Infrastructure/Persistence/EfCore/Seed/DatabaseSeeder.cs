@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SalesDeliveryBI.Application.Abstractions;
+using SalesDeliveryBI.Application.Common;
 using SalesDeliveryBI.Domain.Entities;
 using SalesDeliveryBI.Domain.Enums;
 using SalesDeliveryBI.Infrastructure.Security;
@@ -78,7 +79,8 @@ public class DatabaseSeeder
     /// </summary>
     private static readonly (string RoleName, string[] PermissionCodes)[] SeedRolePermissions =
     [
-        (RoleNames.SuperAdmin, [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits, PermissionCodes.AdminView]),
+        (RoleNames.SuperAdmin,
+            [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits, PermissionCodes.AdminView, PermissionCodes.AdminManage]),
         (RoleNames.GeneralManager, [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits]),
         (RoleNames.FinanceManager, [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits]),
         (RoleNames.CommercialManager, [PermissionCodes.QuotationView]),

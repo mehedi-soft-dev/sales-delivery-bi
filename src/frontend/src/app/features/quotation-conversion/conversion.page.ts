@@ -4,6 +4,7 @@ import { DaysOpenPipe } from '../../shared/pipes/days-open.pipe';
 import { RatePercentPipe } from '../../shared/pipes/rate-percent.pipe';
 import { DataAsOf } from '../../shared/components/data-as-of/data-as-of';
 import { DateRangeFilter, type DateRangeFilterValue } from '../../shared/components/date-range-filter/date-range-filter';
+import { last30DaysRange } from '../../shared/data/date-range-defaults';
 import { KpiCard } from '../../shared/components/kpi-card/kpi-card';
 import { LoadingSkeleton } from '../../shared/components/loading-skeleton/loading-skeleton';
 import { PageHeader } from '../../shared/components/page-header/page-header';
@@ -36,7 +37,8 @@ export class ConversionPage {
   protected readonly service = inject(ConversionService);
   private readonly unitFilterStore = inject(UnitFilterStore);
 
-  protected readonly dateRange = signal<DateRangeFilterValue>({ fromDate: null, toDate: null });
+  protected readonly defaultDateRange = last30DaysRange();
+  protected readonly dateRange = signal<DateRangeFilterValue>(this.defaultDateRange);
   protected readonly grid = signal<GridQuery>(DEFAULT_GRID_QUERY);
 
   constructor() {

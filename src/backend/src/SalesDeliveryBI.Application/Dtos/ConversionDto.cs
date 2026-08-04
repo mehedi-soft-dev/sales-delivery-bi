@@ -18,9 +18,11 @@ public sealed record ConversionKpisDto(
     decimal ConversionRatePct,
     decimal WonValueUsd,
     decimal LostValueUsd,
-    double AvgConversionDays);
+    double AvgConversionDays,
+    int WonCount,
+    int LostCount);
 
-public sealed record MonthlyTrendEntryDto(string Month, decimal ConversionRatePct);
+public sealed record MonthlyTrendEntryDto(string Month, decimal ConversionRatePct, int WonCount, int LostCount);
 
 public sealed record BuyerPerformanceDto(
     string BuyerName,

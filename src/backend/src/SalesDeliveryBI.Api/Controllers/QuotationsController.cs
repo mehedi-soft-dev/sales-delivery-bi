@@ -23,10 +23,13 @@ public class QuotationsController : ControllerBase
     [HttpGet("pipeline")]
     public async Task<ActionResult<DashboardResponse<QuotationPipelineResponseDto>>> GetPipeline(
         [FromQuery] Guid? unitId,
+        [FromQuery] bool includeDraft,
+        [FromQuery] DateOnly? fromDate,
+        [FromQuery] DateOnly? toDate,
         [FromQuery] GridQuery grid,
         CancellationToken cancellationToken)
     {
-        return Ok(await _appService.GetPipelineAsync(unitId, grid, cancellationToken));
+        return Ok(await _appService.GetPipelineAsync(unitId, includeDraft, fromDate, toDate, grid, cancellationToken));
     }
 
     [HttpGet("conversion")]
@@ -47,10 +50,13 @@ public class QuotationsController : ControllerBase
     [HttpGet("aging")]
     public async Task<ActionResult<DashboardResponse<AgingResponseDto>>> GetAging(
         [FromQuery] Guid? unitId,
+        [FromQuery] bool includeDraft,
+        [FromQuery] DateOnly? fromDate,
+        [FromQuery] DateOnly? toDate,
         [FromQuery] GridQuery grid,
         CancellationToken cancellationToken)
     {
-        return Ok(await _appService.GetAgingAsync(unitId, grid, cancellationToken));
+        return Ok(await _appService.GetAgingAsync(unitId, includeDraft, fromDate, toDate, grid, cancellationToken));
     }
 
     [HttpGet("summary")]
@@ -59,6 +65,13 @@ public class QuotationsController : ControllerBase
         CancellationToken cancellationToken)
     {
         return Ok(await _appService.GetSummaryAsync(unitId, cancellationToken));
+    }
+
+    /// <summary>Units the caller may filter dashboards by — backs the topbar's unit dropdown.</summary>
+    [HttpGet("units")]
+    public async Task<ActionResult<IReadOnlyList<UnitOptionDto>>> GetUnits(CancellationToken cancellationToken)
+    {
+        return Ok(await _appService.GetUnitsAsync(cancellationToken));
     }
 
     [HttpGet("{id:guid}")]

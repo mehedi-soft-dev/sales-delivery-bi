@@ -37,12 +37,15 @@ public class CacheWarmupJobTests
     public async Task WarmUpAsync_PipelineMv_PopulatesTheSameKeyQuotationAppServiceReads()
     {
         CacheWarmupJob job = CreateJob(out IConnectionMultiplexer redis);
-        string key = CacheKeys.Pipeline(UnitScope.Unrestricted());
+        string key = CacheKeys.Pipeline(UnitScope.Unrestricted(), includeDraft: false, null, null);
+        string draftKey = CacheKeys.Pipeline(UnitScope.Unrestricted(), includeDraft: true, null, null);
         await redis.GetDatabase().KeyDeleteAsync(key);
+        await redis.GetDatabase().KeyDeleteAsync(draftKey);
 
         await job.WarmUpAsync(CacheWarmupJob.SalesQuotationSummaryMv, CancellationToken.None);
 
-        Assert.True((await redis.GetDatabase().KeyExistsAsync(key)));
+        Assert.True(await redis.GetDatabase().KeyExistsAsync(key));
+        Assert.True(await redis.GetDatabase().KeyExistsAsync(draftKey));
         redis.Dispose();
     }
 
@@ -50,12 +53,15 @@ public class CacheWarmupJobTests
     public async Task WarmUpAsync_AgingMv_PopulatesTheSameKeyQuotationAppServiceReads()
     {
         CacheWarmupJob job = CreateJob(out IConnectionMultiplexer redis);
-        string key = CacheKeys.Aging(UnitScope.Unrestricted());
+        string key = CacheKeys.Aging(UnitScope.Unrestricted(), includeDraft: false, null, null);
+        string draftKey = CacheKeys.Aging(UnitScope.Unrestricted(), includeDraft: true, null, null);
         await redis.GetDatabase().KeyDeleteAsync(key);
+        await redis.GetDatabase().KeyDeleteAsync(draftKey);
 
         await job.WarmUpAsync(CacheWarmupJob.QuotationPipelineDailyMv, CancellationToken.None);
 
         Assert.True(await redis.GetDatabase().KeyExistsAsync(key));
+        Assert.True(await redis.GetDatabase().KeyExistsAsync(draftKey));
         redis.Dispose();
     }
 
@@ -100,20 +106,25 @@ public class CacheWarmupJobTests
 
     private sealed class ThrowingQuotationRepository : IQuotationRepository
     {
-        public Task<DashboardResponse<QuotationPipelineDto>> GetPipelineSummaryAsync(UnitScope scope, CancellationToken cancellationToken) =>
+        public Task<DashboardResponse<QuotationPipelineDto>> GetPipelineSummaryAsync(
+            UnitScope scope, bool includeDraft, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken) =>
             throw new InvalidOperationException("simulated Postgres failure");
 
         public Task<DashboardResponse<ConversionDto>> GetConversionSummaryAsync(
             UnitScope scope, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken) =>
             throw new InvalidOperationException("simulated Postgres failure");
 
-        public Task<DashboardResponse<AgingDto>> GetAgingSummaryAsync(UnitScope scope, CancellationToken cancellationToken) =>
+        public Task<DashboardResponse<AgingDto>> GetAgingSummaryAsync(
+            UnitScope scope, bool includeDraft, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken) =>
             throw new InvalidOperationException("simulated Postgres failure");
 
         public Task<DashboardResponse<QuotationDetailDto?>> GetByIdAsync(Guid quotationId, UnitScope scope, CancellationToken cancellationToken) =>
             throw new InvalidOperationException("simulated Postgres failure");
 
         public Task<DashboardResponse<QuotationSummaryDto>> GetSummaryAsync(UnitScope scope, CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("simulated Postgres failure");
+
+        public Task<IReadOnlyList<UnitOptionDto>> GetUnitsAsync(UnitScope scope, CancellationToken cancellationToken) =>
             throw new InvalidOperationException("simulated Postgres failure");
     }
 }

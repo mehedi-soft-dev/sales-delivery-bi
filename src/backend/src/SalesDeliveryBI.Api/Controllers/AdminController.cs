@@ -37,4 +37,34 @@ public class AdminController : ControllerBase
     {
         return Ok(await _appService.GetPermissionsAsync(grid, cancellationToken));
     }
+
+    /// <summary>
+    /// The one Admin write path (discussed-and-scoped-in) — user/role CRUD and unit assignment remain out
+    /// of scope. Gated by AdminWrite on top of the class-level AdminRead, so a caller needs both permission codes.
+    /// </summary>
+    [HttpPut("roles/{roleId:guid}/permissions")]
+    [Authorize(Policy = AuthorizationPolicies.AdminWrite)]
+    public async Task<ActionResult<AdminRoleDto>> UpdateRolePermissions(
+        Guid roleId, [FromBody] UpdateRolePermissionsRequestDto request, CancellationToken cancellationToken)
+    {
+        AdminRoleDto? updated;
+        try
+        {
+            updated = await _appService.UpdateRolePermissionsAsync(roleId, request.PermissionCodes, cancellationToken);
+        }
+        catch (ArgumentException ex)
+        {
+            return Problem(title: "Invalid permission codes", statusCode: StatusCodes.Status400BadRequest, detail: ex.Message);
+        }
+
+        if (updated is null)
+        {
+            return Problem(
+                title: "Role not found",
+                statusCode: StatusCodes.Status404NotFound,
+                detail: $"No role '{roleId}' was found.");
+        }
+
+        return Ok(updated);
+    }
 }

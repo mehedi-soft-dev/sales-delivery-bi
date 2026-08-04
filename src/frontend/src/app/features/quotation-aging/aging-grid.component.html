@@ -8,6 +8,8 @@
   [first]="(page().page - 1) * page().pageSize"
   [totalRecords]="page().totalCount"
   [loading]="loading()"
+  [sortField]="sortField()"
+  [sortOrder]="sortOrder()"
   [rowsPerPageOptions]="[10, 20, 50]"
   [showCurrentPageReport]="true"
   currentPageReportTemplate="Showing {first} to {last} of {totalRecords} results"
@@ -18,6 +20,7 @@
     <tr>
       <th pSortableColumn="quotationNo">Quotation No. <p-sortIcon field="quotationNo" /></th>
       <th pSortableColumn="buyerName">Buyer <p-sortIcon field="buyerName" /></th>
+      <th pSortableColumn="unitName" class="aging-grid__col--low-priority">Unit <p-sortIcon field="unitName" /></th>
       <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
       <th pSortableColumn="riskLevel" class="aging-grid__col--low-priority">Risk Level <p-sortIcon field="riskLevel" /></th>
       <th pSortableColumn="daysOpen" class="aging-grid__col--right">Days Open <p-sortIcon field="daysOpen" /></th>
@@ -29,6 +32,7 @@
     <tr>
       <td>{{ row.quotationNo }}</td>
       <td>{{ row.buyerName }}</td>
+      <td class="aging-grid__col--low-priority">{{ row.unitName }}</td>
       <td><app-status-badge [status]="row.status" /></td>
       <td class="aging-grid__col--low-priority">{{ row.riskLevel }}</td>
       <td class="aging-grid__col--right">{{ row.daysOpen | daysOpen }}</td>
@@ -38,7 +42,7 @@
 
   <ng-template #emptymessage>
     <tr>
-      <td colspan="6" class="aging-grid__empty">No aged quotations match this filter.</td>
+      <td colspan="7" class="aging-grid__empty">No aged quotations match this filter.</td>
     </tr>
   </ng-template>
 </p-table>

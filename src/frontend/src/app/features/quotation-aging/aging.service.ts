@@ -7,6 +7,7 @@ import { createQuerySignal } from '../../shared/data/query-signal';
 
 export interface AgingFilter {
   unitId: string | null;
+  includeDraft: boolean;
   grid: GridQuery;
 }
 
@@ -18,6 +19,7 @@ export class AgingService {
 
   private readonly query = createQuerySignal<AgingFilter, AgingResponseDto>((filter) => {
     let params = filter.unitId ? new HttpParams().set('unitId', filter.unitId) : new HttpParams();
+    params = params.set('includeDraft', filter.includeDraft);
     params = appendGridParams(params, filter.grid);
     return this.http.get<DashboardResponse<AgingResponseDto>>(AGING_ENDPOINT, { params });
   });

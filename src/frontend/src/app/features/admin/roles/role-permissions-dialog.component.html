@@ -1,0 +1,28 @@
+<p-dialog
+  header="Edit Permissions"
+  [modal]="true"
+  [visible]="visible()"
+  (visibleChange)="visibleChange.emit($event)"
+  (onHide)="onHide()"
+  [style]="{ width: '28rem' }"
+>
+  @if (role(); as r) {
+    <p class="role-permissions-dialog__subtitle">{{ r.roleName }}</p>
+
+    <div class="role-permissions-dialog__codes">
+      @for (code of allCodes(); track code) {
+        <label class="role-permissions-dialog__code">
+          <p-checkbox [(ngModel)]="selectedCodes" [value]="code" name="permissionCodes" />
+          <span>{{ code }}</span>
+        </label>
+      } @empty {
+        <p class="role-permissions-dialog__empty">Loading permission codes…</p>
+      }
+    </div>
+  }
+
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="onHide()" [disabled]="saving()" />
+    <p-button label="Save" (onClick)="onSave()" [loading]="saving()" />
+  </ng-template>
+</p-dialog>

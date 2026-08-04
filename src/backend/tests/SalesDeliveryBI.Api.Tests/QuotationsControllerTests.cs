@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Npgsql;
+using SalesDeliveryBI.Application.Common;
 using SalesDeliveryBI.Infrastructure.Security;
 
 namespace SalesDeliveryBI.Api.Tests;

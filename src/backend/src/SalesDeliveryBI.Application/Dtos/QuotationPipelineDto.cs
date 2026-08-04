@@ -20,13 +20,14 @@ public sealed record PipelineKpisDto(
     int PendingApprovalCount,
     double AvgDaysOpen);
 
-public sealed record StatusFunnelEntryDto(string Status, int Count);
+public sealed record StatusFunnelEntryDto(string Status, int Count, decimal ValueUsd);
 
 public sealed record OpenQuotationDto(
     Guid QuotationId,
     string QuotationNo,
     string BuyerName,
     string MerchandiserName,
+    string UnitName,
     decimal ValueUsd,
     string Status,
     int DaysOpen);

@@ -58,4 +58,17 @@ public class AdminAppService
         IReadOnlyList<AdminPermissionDto> permissions = await _repository.GetPermissionsAsync(cancellationToken);
         return GridPaging.Apply(permissions, grid, PermissionSortSelectors);
     }
+
+    /// <exception cref="ArgumentException">A permission code isn't in PermissionCodes.All.</exception>
+    public async Task<AdminRoleDto?> UpdateRolePermissionsAsync(
+        Guid roleId, IReadOnlyList<string> permissionCodes, CancellationToken cancellationToken = default)
+    {
+        string[] unknown = permissionCodes.Except(PermissionCodes.All).ToArray();
+        if (unknown.Length > 0)
+        {
+            throw new ArgumentException($"Unknown permission code(s): {string.Join(", ", unknown)}");
+        }
+
+        return await _repository.SetRolePermissionsAsync(roleId, permissionCodes, cancellationToken);
+    }
 }

@@ -4,7 +4,40 @@
  */
 
 export interface paths {
-    "/api/sales/quotations/pipeline": {
+    "/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users": {
         parameters: {
             query?: never;
             header?: never;
@@ -14,7 +47,12 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    unitId?: string;
+                    Page?: number | string;
+                    PageSize?: number | string;
+                    SortField?: string;
+                    SortDescending?: boolean;
+                    NormalizedPage?: number | string;
+                    NormalizedPageSize?: number | string;
                 };
                 header?: never;
                 path?: never;
@@ -28,9 +66,233 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["DashboardResponseOfQuotationPipelineDto"];
-                        "application/json": components["schemas"]["DashboardResponseOfQuotationPipelineDto"];
-                        "text/json": components["schemas"]["DashboardResponseOfQuotationPipelineDto"];
+                        "text/plain": components["schemas"]["PagedResultOfAdminUserDto"];
+                        "application/json": components["schemas"]["PagedResultOfAdminUserDto"];
+                        "text/json": components["schemas"]["PagedResultOfAdminUserDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number | string;
+                    PageSize?: number | string;
+                    SortField?: string;
+                    SortDescending?: boolean;
+                    NormalizedPage?: number | string;
+                    NormalizedPageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedResultOfAdminRoleDto"];
+                        "application/json": components["schemas"]["PagedResultOfAdminRoleDto"];
+                        "text/json": components["schemas"]["PagedResultOfAdminRoleDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number | string;
+                    PageSize?: number | string;
+                    SortField?: string;
+                    SortDescending?: boolean;
+                    NormalizedPage?: number | string;
+                    NormalizedPageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedResultOfAdminPermissionDto"];
+                        "application/json": components["schemas"]["PagedResultOfAdminPermissionDto"];
+                        "text/json": components["schemas"]["PagedResultOfAdminPermissionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/roles/{roleId}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    roleId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateRolePermissionsRequestDto"];
+                    "text/json": components["schemas"]["UpdateRolePermissionsRequestDto"];
+                    "application/*+json": components["schemas"]["UpdateRolePermissionsRequestDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminRoleDto"];
+                        "application/json": components["schemas"]["AdminRoleDto"];
+                        "text/json": components["schemas"]["AdminRoleDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["LoginRequestDto"];
+                    "text/json": components["schemas"]["LoginRequestDto"];
+                    "application/*+json": components["schemas"]["LoginRequestDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LoginResponseDto"];
+                        "application/json": components["schemas"]["LoginResponseDto"];
+                        "text/json": components["schemas"]["LoginResponseDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sales/quotations/pipeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    unitId?: string;
+                    includeDraft?: boolean;
+                    fromDate?: string;
+                    toDate?: string;
+                    Page?: number | string;
+                    PageSize?: number | string;
+                    SortField?: string;
+                    SortDescending?: boolean;
+                    NormalizedPage?: number | string;
+                    NormalizedPageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DashboardResponseOfQuotationPipelineResponseDto"];
+                        "application/json": components["schemas"]["DashboardResponseOfQuotationPipelineResponseDto"];
+                        "text/json": components["schemas"]["DashboardResponseOfQuotationPipelineResponseDto"];
                     };
                 };
             };
@@ -56,6 +318,12 @@ export interface paths {
                     unitId?: string;
                     fromDate?: string;
                     toDate?: string;
+                    Page?: number | string;
+                    PageSize?: number | string;
+                    SortField?: string;
+                    SortDescending?: boolean;
+                    NormalizedPage?: number | string;
+                    NormalizedPageSize?: number | string;
                 };
                 header?: never;
                 path?: never;
@@ -69,9 +337,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["DashboardResponseOfConversionDto"];
-                        "application/json": components["schemas"]["DashboardResponseOfConversionDto"];
-                        "text/json": components["schemas"]["DashboardResponseOfConversionDto"];
+                        "text/plain": components["schemas"]["DashboardResponseOfConversionResponseDto"];
+                        "application/json": components["schemas"]["DashboardResponseOfConversionResponseDto"];
+                        "text/json": components["schemas"]["DashboardResponseOfConversionResponseDto"];
                     };
                 };
             };
@@ -95,6 +363,15 @@ export interface paths {
             parameters: {
                 query?: {
                     unitId?: string;
+                    includeDraft?: boolean;
+                    fromDate?: string;
+                    toDate?: string;
+                    Page?: number | string;
+                    PageSize?: number | string;
+                    SortField?: string;
+                    SortDescending?: boolean;
+                    NormalizedPage?: number | string;
+                    NormalizedPageSize?: number | string;
                 };
                 header?: never;
                 path?: never;
@@ -108,9 +385,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["DashboardResponseOfAgingDto"];
-                        "application/json": components["schemas"]["DashboardResponseOfAgingDto"];
-                        "text/json": components["schemas"]["DashboardResponseOfAgingDto"];
+                        "text/plain": components["schemas"]["DashboardResponseOfAgingResponseDto"];
+                        "application/json": components["schemas"]["DashboardResponseOfAgingResponseDto"];
+                        "text/json": components["schemas"]["DashboardResponseOfAgingResponseDto"];
                     };
                 };
             };
@@ -150,6 +427,43 @@ export interface paths {
                         "text/plain": components["schemas"]["DashboardResponseOfQuotationSummaryDto"];
                         "application/json": components["schemas"]["DashboardResponseOfQuotationSummaryDto"];
                         "text/json": components["schemas"]["DashboardResponseOfQuotationSummaryDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sales/quotations/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UnitOptionDto"][];
+                        "application/json": components["schemas"]["UnitOptionDto"][];
+                        "text/json": components["schemas"]["UnitOptionDto"][];
                     };
                 };
             };
@@ -205,11 +519,33 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AdminPermissionDto: {
+            permissionCode: string;
+            roleNames: string[];
+        };
+        AdminRoleDto: {
+            /** Format: uuid */
+            roleId: string;
+            roleName: string;
+            /** Format: int32 */
+            userCount: number | string;
+            permissionCodes: string[];
+        };
+        AdminUserDto: {
+            /** Format: uuid */
+            userId: string;
+            email: string;
+            displayName: string;
+            roleName: string;
+            isActive: boolean;
+            unitNames: string[];
+        };
         AgedQuotationDto: {
             /** Format: uuid */
             quotationId: string;
             quotationNo: string;
             buyerName: string;
+            unitName: string;
             /** Format: double */
             valueUsd: number | string;
             /** Format: int32 */
@@ -224,16 +560,17 @@ export interface components {
             /** Format: double */
             valueUsd: number | string;
         };
-        AgingDto: {
-            kpis: components["schemas"]["AgingKpisDto"];
-            agingBuckets: components["schemas"]["AgingBucketDto"][];
-            agedQuotations: components["schemas"]["AgedQuotationDto"][];
-        };
         AgingKpisDto: {
             /** Format: double */
             totalOpenValueUsd: number | string;
             /** Format: double */
             highRiskAgedValueUsd: number | string;
+        };
+        AgingResponseDto: {
+            kpis: components["schemas"]["AgingKpisDto"];
+            agingBuckets: components["schemas"]["AgingBucketDto"][];
+            riskLevels: components["schemas"]["RiskLevelBucketDto"][];
+            agedQuotations: components["schemas"]["PagedResultOfAgedQuotationDto"];
         };
         BuyerPerformanceDto: {
             buyerName: string;
@@ -248,11 +585,6 @@ export interface components {
             /** Format: double */
             valueUsd: number | string;
         };
-        ConversionDto: {
-            kpis: components["schemas"]["ConversionKpisDto"];
-            monthlyTrend: components["schemas"]["MonthlyTrendEntryDto"][];
-            buyerPerformance: components["schemas"]["BuyerPerformanceDto"][];
-        };
         ConversionKpisDto: {
             /** Format: double */
             conversionRatePct: number | string;
@@ -262,14 +594,23 @@ export interface components {
             lostValueUsd: number | string;
             /** Format: double */
             avgConversionDays: number | string;
+            /** Format: int32 */
+            wonCount: number | string;
+            /** Format: int32 */
+            lostCount: number | string;
         };
-        DashboardResponseOfAgingDto: {
-            data: null | components["schemas"]["AgingDto"];
+        ConversionResponseDto: {
+            kpis: components["schemas"]["ConversionKpisDto"];
+            monthlyTrend: components["schemas"]["MonthlyTrendEntryDto"][];
+            buyerPerformance: components["schemas"]["PagedResultOfBuyerPerformanceDto"];
+        };
+        DashboardResponseOfAgingResponseDto: {
+            data: null | components["schemas"]["AgingResponseDto"];
             /** Format: date-time */
             lastRefresh: string;
         };
-        DashboardResponseOfConversionDto: {
-            data: null | components["schemas"]["ConversionDto"];
+        DashboardResponseOfConversionResponseDto: {
+            data: null | components["schemas"]["ConversionResponseDto"];
             /** Format: date-time */
             lastRefresh: string;
         };
@@ -278,8 +619,8 @@ export interface components {
             /** Format: date-time */
             lastRefresh: string;
         };
-        DashboardResponseOfQuotationPipelineDto: {
-            data: null | components["schemas"]["QuotationPipelineDto"];
+        DashboardResponseOfQuotationPipelineResponseDto: {
+            data: null | components["schemas"]["QuotationPipelineResponseDto"];
             /** Format: date-time */
             lastRefresh: string;
         };
@@ -288,10 +629,24 @@ export interface components {
             /** Format: date-time */
             lastRefresh: string;
         };
+        LoginRequestDto: {
+            email: string;
+            password: string;
+        };
+        LoginResponseDto: {
+            token: string;
+            /** Format: date-time */
+            expiresAtUtc: string;
+            displayName: string;
+        };
         MonthlyTrendEntryDto: {
             month: string;
             /** Format: double */
             conversionRatePct: number | string;
+            /** Format: int32 */
+            wonCount: number | string;
+            /** Format: int32 */
+            lostCount: number | string;
         };
         OpenQuotationDto: {
             /** Format: uuid */
@@ -299,11 +654,66 @@ export interface components {
             quotationNo: string;
             buyerName: string;
             merchandiserName: string;
+            unitName: string;
             /** Format: double */
             valueUsd: number | string;
             status: string;
             /** Format: int32 */
             daysOpen: number | string;
+        };
+        PagedResultOfAdminPermissionDto: {
+            items: components["schemas"]["AdminPermissionDto"][];
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+        };
+        PagedResultOfAdminRoleDto: {
+            items: components["schemas"]["AdminRoleDto"][];
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+        };
+        PagedResultOfAdminUserDto: {
+            items: components["schemas"]["AdminUserDto"][];
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+        };
+        PagedResultOfAgedQuotationDto: {
+            items: components["schemas"]["AgedQuotationDto"][];
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+        };
+        PagedResultOfBuyerPerformanceDto: {
+            items: components["schemas"]["BuyerPerformanceDto"][];
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+        };
+        PagedResultOfOpenQuotationDto: {
+            items: components["schemas"]["OpenQuotationDto"][];
+            /** Format: int32 */
+            totalCount: number | string;
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
         };
         PipelineKpisDto: {
             /** Format: int32 */
@@ -365,10 +775,10 @@ export interface components {
             /** Format: double */
             amount: number | string;
         };
-        QuotationPipelineDto: {
+        QuotationPipelineResponseDto: {
             kpis: components["schemas"]["PipelineKpisDto"];
             statusFunnel: components["schemas"]["StatusFunnelEntryDto"][];
-            openQuotations: components["schemas"]["OpenQuotationDto"][];
+            openQuotations: components["schemas"]["PagedResultOfOpenQuotationDto"];
         };
         QuotationStatusHistoryDto: {
             status: string;
@@ -383,10 +793,27 @@ export interface components {
             /** Format: int32 */
             highValueAgedAlertCount: number | string;
         };
+        RiskLevelBucketDto: {
+            riskLevel: string;
+            /** Format: int32 */
+            count: number | string;
+            /** Format: double */
+            valueUsd: number | string;
+        };
         StatusFunnelEntryDto: {
             status: string;
             /** Format: int32 */
             count: number | string;
+            /** Format: double */
+            valueUsd: number | string;
+        };
+        UnitOptionDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        UpdateRolePermissionsRequestDto: {
+            permissionCodes: string[];
         };
     };
     responses: never;

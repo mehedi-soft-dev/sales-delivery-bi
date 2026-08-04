@@ -20,9 +20,15 @@ internal sealed class FakeQuotationRepository : IQuotationRepository
 
     public IReadOnlyList<AgedQuotationDto> AgedQuotations { get; set; } = [];
 
-    public Task<DashboardResponse<QuotationPipelineDto>> GetPipelineSummaryAsync(UnitScope scope, CancellationToken cancellationToken)
+    public bool? LastIncludeDraft { get; private set; }
+
+    public Task<DashboardResponse<QuotationPipelineDto>> GetPipelineSummaryAsync(
+        UnitScope scope, bool includeDraft, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken)
     {
         LastScope = scope;
+        LastIncludeDraft = includeDraft;
+        LastFromDate = fromDate;
+        LastToDate = toDate;
         CallCount++;
         var dto = new QuotationPipelineDto(new PipelineKpisDto(0, 0m, 0, 0d), [], OpenQuotations);
         return Task.FromResult(new DashboardResponse<QuotationPipelineDto>(dto, DateTime.UtcNow));
@@ -35,15 +41,19 @@ internal sealed class FakeQuotationRepository : IQuotationRepository
         LastFromDate = fromDate;
         LastToDate = toDate;
         CallCount++;
-        var dto = new ConversionDto(new ConversionKpisDto(0m, 0m, 0m, 0d), [], BuyerPerformance);
+        var dto = new ConversionDto(new ConversionKpisDto(0m, 0m, 0m, 0d, 0, 0), [], BuyerPerformance);
         return Task.FromResult(new DashboardResponse<ConversionDto>(dto, DateTime.UtcNow));
     }
 
-    public Task<DashboardResponse<AgingDto>> GetAgingSummaryAsync(UnitScope scope, CancellationToken cancellationToken)
+    public Task<DashboardResponse<AgingDto>> GetAgingSummaryAsync(
+        UnitScope scope, bool includeDraft, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken)
     {
         LastScope = scope;
+        LastIncludeDraft = includeDraft;
+        LastFromDate = fromDate;
+        LastToDate = toDate;
         CallCount++;
-        var dto = new AgingDto(new AgingKpisDto(0m, 0m), [], AgedQuotations);
+        var dto = new AgingDto(new AgingKpisDto(0m, 0m), [], [], AgedQuotations);
         return Task.FromResult(new DashboardResponse<AgingDto>(dto, DateTime.UtcNow));
     }
 
@@ -61,5 +71,14 @@ internal sealed class FakeQuotationRepository : IQuotationRepository
         CallCount++;
         var dto = new QuotationSummaryDto(0m, 0m, 0);
         return Task.FromResult(new DashboardResponse<QuotationSummaryDto>(dto, DateTime.UtcNow));
+    }
+
+    public IReadOnlyList<UnitOptionDto> Units { get; set; } = [];
+
+    public Task<IReadOnlyList<UnitOptionDto>> GetUnitsAsync(UnitScope scope, CancellationToken cancellationToken)
+    {
+        LastScope = scope;
+        CallCount++;
+        return Task.FromResult(Units);
     }
 }

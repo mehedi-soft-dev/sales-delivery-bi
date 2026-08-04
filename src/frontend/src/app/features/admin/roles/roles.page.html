@@ -1,5 +1,5 @@
 <div class="roles-page">
-  <app-page-header title="Roles" subtitle="Seeded roles and the permission codes each one grants — view only." icon="sitemap" />
+  <app-page-header title="Roles" subtitle="Seeded roles and the permission codes each one grants." icon="sitemap" />
 
   @if (service.error()) {
     <div class="dashboard-state dashboard-state--error" role="alert">Something went wrong loading roles. Please try again.</div>
@@ -25,6 +25,9 @@
             <th pSortableColumn="roleName">Role <p-sortIcon field="roleName" /></th>
             <th pSortableColumn="userCount" class="roles-page__col--right">Users <p-sortIcon field="userCount" /></th>
             <th>Permissions</th>
+            @if (canManagePermissions) {
+              <th class="roles-page__col--right">Actions</th>
+            }
           </tr>
         </ng-template>
         <ng-template #body let-row>
@@ -38,14 +41,26 @@
                 }
               </div>
             </td>
+            @if (canManagePermissions) {
+              <td class="roles-page__col--right">
+                <p-button label="Edit" size="small" severity="secondary" [text]="true" (onClick)="onEditPermissions(row)" />
+              </td>
+            }
           </tr>
         </ng-template>
         <ng-template #emptymessage>
           <tr>
-            <td colspan="3" class="roles-page__empty">No roles found.</td>
+            <td [attr.colspan]="canManagePermissions ? 4 : 3" class="roles-page__empty">No roles found.</td>
           </tr>
         </ng-template>
       </p-table>
     </div>
   }
 </div>
+
+<app-role-permissions-dialog
+  [role]="editingRole()"
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  (saved)="onDialogSaved()"
+/>

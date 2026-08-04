@@ -15,5 +15,7 @@ import { DaysOpenPipe } from '../../shared/pipes/days-open.pipe';
 export class PipelineGridComponent {
   readonly page = input.required<PagedResult<OpenQuotationDto>>();
   readonly loading = input(false);
+  readonly sortField = input<string | null>(null);
+  readonly sortOrder = input(1);
   readonly lazyLoad = output<TableLazyLoadEvent>();
 }

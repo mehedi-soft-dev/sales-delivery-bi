@@ -1,9 +1,10 @@
 import { Component, computed, input } from '@angular/core';
 import { ChartComponent } from 'ng-apexcharts';
-import type { ApexAxisChartSeries, ApexChart, ApexDataLabels, ApexTooltip, ApexXAxis, ApexYAxis } from 'ng-apexcharts';
+import type { ApexAxisChartSeries, ApexChart, ApexDataLabels, ApexLegend, ApexTooltip, ApexXAxis, ApexYAxis } from 'ng-apexcharts';
 import type { MonthlyTrendEntryDto } from '../../core/models/dashboard.models';
 import { CHART_COLORS, createBaseChartOptions } from '../../shared/charts/apex-chart-theme';
 
+/** Two lines per month: Won Count vs Lost Count. */
 @Component({
   selector: 'app-conversion-trend-chart',
   imports: [ChartComponent],
@@ -15,31 +16,29 @@ export class ConversionTrendChartComponent {
   private readonly base = createBaseChartOptions();
 
   protected readonly chart: ApexChart = { ...this.base.chart, type: 'line', height: 280 };
-  protected readonly colors = [CHART_COLORS.trend];
+  protected readonly colors = [CHART_COLORS.statusGood, CHART_COLORS.statusCritical];
   protected readonly stroke = { curve: 'smooth' as const, width: 3 };
   protected readonly grid = this.base.grid;
-  // Enabled (overriding the shared default) so the conversion rate is readable without hovering —
-  // this dashboard has no accompanying data table, so the chart is the only place to read it.
-  protected readonly dataLabels: ApexDataLabels = {
-    enabled: true,
-    formatter: (value: number | string) => `${Math.round(Number(value))}%`,
-    style: { colors: [CHART_COLORS.trend] },
-    offsetY: -8,
-  };
+  protected readonly dataLabels: ApexDataLabels = { enabled: false };
+  protected readonly legend: ApexLegend = { show: true, position: 'top', horizontalAlign: 'right' };
   protected readonly responsive = this.base.responsive;
   protected readonly tooltip: ApexTooltip = {
     ...this.base.tooltip,
-    y: { formatter: (value: number) => `${Math.round(value)}%` },
+    y: { formatter: (value: number) => Math.round(value).toLocaleString('en-US') },
   };
   protected readonly yaxis: ApexYAxis = {
-    max: 100,
-    labels: { formatter: (value: number) => `${Math.round(value)}%` },
+    forceNiceScale: true,
+    labels: { formatter: (value: number) => Math.round(value).toLocaleString('en-US') },
   };
 
   protected readonly series = computed<ApexAxisChartSeries>(() => [
     {
-      name: 'Conversion Rate',
-      data: this.trend().map((entry) => normalizeNumber(entry.conversionRatePct)),
+      name: 'Won',
+      data: this.trend().map((entry) => normalizeNumber(entry.wonCount)),
+    },
+    {
+      name: 'Lost',
+      data: this.trend().map((entry) => normalizeNumber(entry.lostCount)),
     },
   ]);
 

@@ -22,6 +22,7 @@ public class QuotationAppService
             ["quotationNo"] = r => r.QuotationNo,
             ["buyerName"] = r => r.BuyerName,
             ["merchandiserName"] = r => r.MerchandiserName,
+            ["unitName"] = r => r.UnitName,
             ["valueUsd"] = r => r.ValueUsd,
             ["status"] = r => r.Status,
             ["daysOpen"] = r => r.DaysOpen,
@@ -43,6 +44,7 @@ public class QuotationAppService
         {
             ["quotationNo"] = r => r.QuotationNo,
             ["buyerName"] = r => r.BuyerName,
+            ["unitName"] = r => r.UnitName,
             ["valueUsd"] = r => r.ValueUsd,
             ["daysOpen"] = r => r.DaysOpen,
             ["status"] = r => r.Status,
@@ -68,15 +70,18 @@ public class QuotationAppService
 
     public async Task<DashboardResponse<QuotationPipelineResponseDto>> GetPipelineAsync(
         Guid? unitId,
+        bool includeDraft,
+        DateOnly? fromDate,
+        DateOnly? toDate,
         GridQuery grid,
         CancellationToken cancellationToken = default)
     {
         UnitScope scope = _unitAccessGuard.Validate(unitId);
 
         DashboardResponse<QuotationPipelineDto> cached = await _cache.GetOrSetAsync(
-            CacheKeys.Pipeline(scope),
+            CacheKeys.Pipeline(scope, includeDraft, fromDate, toDate),
             _cacheTtls.Pipeline,
-            ct => _repository.GetPipelineSummaryAsync(scope, ct),
+            ct => _repository.GetPipelineSummaryAsync(scope, includeDraft, fromDate, toDate, ct),
             cancellationToken);
 
         PagedResult<OpenQuotationDto> page = GridPaging.Apply(cached.Data.OpenQuotations, grid, PipelineSortSelectors);
@@ -108,19 +113,22 @@ public class QuotationAppService
 
     public async Task<DashboardResponse<AgingResponseDto>> GetAgingAsync(
         Guid? unitId,
+        bool includeDraft,
+        DateOnly? fromDate,
+        DateOnly? toDate,
         GridQuery grid,
         CancellationToken cancellationToken = default)
     {
         UnitScope scope = _unitAccessGuard.Validate(unitId);
 
         DashboardResponse<AgingDto> cached = await _cache.GetOrSetAsync(
-            CacheKeys.Aging(scope),
+            CacheKeys.Aging(scope, includeDraft, fromDate, toDate),
             _cacheTtls.Aging,
-            ct => _repository.GetAgingSummaryAsync(scope, ct),
+            ct => _repository.GetAgingSummaryAsync(scope, includeDraft, fromDate, toDate, ct),
             cancellationToken);
 
         PagedResult<AgedQuotationDto> page = GridPaging.Apply(cached.Data.AgedQuotations, grid, AgedQuotationSortSelectors);
-        var response = new AgingResponseDto(cached.Data.Kpis, cached.Data.AgingBuckets, page);
+        var response = new AgingResponseDto(cached.Data.Kpis, cached.Data.AgingBuckets, cached.Data.RiskLevels, page);
 
         return new DashboardResponse<AgingResponseDto>(response, cached.LastRefresh);
     }
@@ -146,6 +154,21 @@ public class QuotationAppService
             CacheKeys.Summary(scope),
             _cacheTtls.Summary,
             ct => _repository.GetSummaryAsync(scope, ct),
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Units the caller may filter dashboards by — ALL units for a caller with bi.quotation.viewAllUnits,
+    /// otherwise only their own assigned units. Never the full catalog for a row-restricted caller.
+    /// </summary>
+    public async Task<IReadOnlyList<UnitOptionDto>> GetUnitsAsync(CancellationToken cancellationToken = default)
+    {
+        UnitScope scope = _unitAccessGuard.Validate(null);
+
+        return await _cache.GetOrSetAsync(
+            CacheKeys.Units(scope),
+            _cacheTtls.Units,
+            ct => _repository.GetUnitsAsync(scope, ct),
             cancellationToken);
     }
 }

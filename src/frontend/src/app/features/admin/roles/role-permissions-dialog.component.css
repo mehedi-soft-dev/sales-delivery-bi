@@ -1,0 +1,25 @@
+.role-permissions-dialog__subtitle {
+  margin: 0 0 1rem;
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
+}
+
+.role-permissions-dialog__codes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.role-permissions-dialog__code {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.role-permissions-dialog__empty {
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
+  margin: 0;
+}

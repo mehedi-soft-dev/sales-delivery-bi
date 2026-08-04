@@ -42,28 +42,64 @@ public class QuotationRepositoryTests
     }
 
     [Fact]
-    public async Task GetPipelineSummaryAsync_MatchesSeededStatusCounts()
+    public async Task GetPipelineSummaryAsync_ExcludingDraft_MatchesSeededStatusCounts()
     {
         QuotationRepository repository = CreateRepository();
 
         DashboardResponse<QuotationPipelineDto> result =
-            await repository.GetPipelineSummaryAsync(Unrestricted, CancellationToken.None);
+            await repository.GetPipelineSummaryAsync(Unrestricted, includeDraft: false, null, null, CancellationToken.None);
 
-        // Seed status distribution (seed-data.md): Approved 3, Draft 8, Negotiation 3, PendingApproval 1, Submitted 5 = 20 open.
-        Assert.Equal(20, result.Data.Kpis.OpenQuotationsCount);
+        // Seed status distribution (seed-data.md): Approved 3, Negotiation 3, PendingApproval 1, Submitted 5 = 12 open excluding Draft.
+        Assert.Equal(12, result.Data.Kpis.OpenQuotationsCount);
         Assert.Equal(1, result.Data.Kpis.PendingApprovalCount);
         Assert.True(result.Data.Kpis.PipelineValueUsd > 0);
 
+        // Draft is dropped from the funnel entirely (not zeroed) when includeDraft is false.
         Dictionary<string, int> funnel = result.Data.StatusFunnel.ToDictionary(f => f.Status, f => f.Count);
-        Assert.Equal(8, funnel["Draft"]);
+        Assert.False(funnel.ContainsKey("Draft"));
         Assert.Equal(5, funnel["Submitted"]);
         Assert.Equal(3, funnel["Negotiation"]);
         Assert.Equal(1, funnel["PendingApproval"]);
         Assert.Equal(3, funnel["Approved"]);
         Assert.Equal(7, funnel["Converted"]);
 
-        Assert.Equal(20, result.Data.OpenQuotations.Count);
+        Assert.Equal(12, result.Data.OpenQuotations.Count);
+        Assert.DoesNotContain(result.Data.OpenQuotations, q => q.Status == "Draft");
         Assert.True(result.LastRefresh > DateTime.MinValue);
+    }
+
+    [Fact]
+    public async Task GetPipelineSummaryAsync_IncludingDraft_AddsDraftBackIntoOpenSetAndFunnel()
+    {
+        QuotationRepository repository = CreateRepository();
+
+        DashboardResponse<QuotationPipelineDto> result =
+            await repository.GetPipelineSummaryAsync(Unrestricted, includeDraft: true, null, null, CancellationToken.None);
+
+        // 12 (excluding Draft) + 8 Draft = 20 total open, same as the pre-toggle "open" definition.
+        Assert.Equal(20, result.Data.Kpis.OpenQuotationsCount);
+        Assert.Equal(20, result.Data.OpenQuotations.Count);
+        Assert.Contains(result.Data.OpenQuotations, q => q.Status == "Draft");
+
+        Dictionary<string, int> funnel = result.Data.StatusFunnel.ToDictionary(f => f.Status, f => f.Count);
+        Assert.Equal(8, funnel["Draft"]);
+    }
+
+    [Fact]
+    public async Task GetPipelineSummaryAsync_DateRangeFilter_ExcludesQuotationsOutsideRange()
+    {
+        QuotationRepository repository = CreateRepository();
+
+        // Seed dates span 2026-06-12..2026-08-01 (seed-data.md) — a July-only window excludes every June row.
+        var fromDate = new DateOnly(2026, 7, 1);
+        var toDate = new DateOnly(2026, 7, 31);
+
+        DashboardResponse<QuotationPipelineDto> filtered =
+            await repository.GetPipelineSummaryAsync(Unrestricted, includeDraft: true, fromDate, toDate, CancellationToken.None);
+        DashboardResponse<QuotationPipelineDto> unfiltered =
+            await repository.GetPipelineSummaryAsync(Unrestricted, includeDraft: true, null, null, CancellationToken.None);
+
+        Assert.True(filtered.Data.OpenQuotations.Count < unfiltered.Data.OpenQuotations.Count);
     }
 
     [Fact]
@@ -86,16 +122,31 @@ public class QuotationRepositoryTests
     }
 
     [Fact]
-    public async Task GetAgingSummaryAsync_BucketsReconcileWithOpenCount()
+    public async Task GetAgingSummaryAsync_ExcludingDraft_BucketsReconcileWithOpenCount()
     {
         QuotationRepository repository = CreateRepository();
 
-        DashboardResponse<AgingDto> result = await repository.GetAgingSummaryAsync(Unrestricted, CancellationToken.None);
+        DashboardResponse<AgingDto> result =
+            await repository.GetAgingSummaryAsync(Unrestricted, includeDraft: false, null, null, CancellationToken.None);
 
         Assert.Equal(5, result.Data.AgingBuckets.Count);
+        Assert.Equal(12, result.Data.AgingBuckets.Sum(b => b.Count));
+        Assert.Equal(12, result.Data.AgedQuotations.Count);
+        Assert.DoesNotContain(result.Data.AgedQuotations, q => q.Status == "Draft");
+        Assert.True(result.Data.Kpis.HighRiskAgedValueUsd <= result.Data.Kpis.TotalOpenValueUsd);
+    }
+
+    [Fact]
+    public async Task GetAgingSummaryAsync_IncludingDraft_AddsDraftBackIntoBucketsAndGrid()
+    {
+        QuotationRepository repository = CreateRepository();
+
+        DashboardResponse<AgingDto> result =
+            await repository.GetAgingSummaryAsync(Unrestricted, includeDraft: true, null, null, CancellationToken.None);
+
         Assert.Equal(20, result.Data.AgingBuckets.Sum(b => b.Count));
         Assert.Equal(20, result.Data.AgedQuotations.Count);
-        Assert.True(result.Data.Kpis.HighRiskAgedValueUsd <= result.Data.Kpis.TotalOpenValueUsd);
+        Assert.Contains(result.Data.AgedQuotations, q => q.Status == "Draft");
     }
 
     [Fact]
