@@ -1,0 +1,31 @@
+.roles-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.roles-page__col--right {
+  text-align: right;
+}
+
+.roles-page__codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.roles-page__code {
+  display: inline-flex;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 6px;
+  background: var(--p-surface-100);
+  color: var(--p-text-muted-color);
+  font-size: 0.75rem;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+.roles-page__empty {
+  text-align: center;
+  color: var(--p-text-muted-color);
+  padding: 1.5rem;
+}

@@ -8,6 +8,10 @@ namespace SalesDeliveryBI.Application.Tests;
 /// <summary>Mocked repository/cache/guard — the real-DB/Redis path is covered separately in Infrastructure.Tests/Api.Tests.</summary>
 public class QuotationAppServiceTests
 {
+    private static readonly CacheTtlOptions CacheTtls = new();
+
+    private static readonly GridQuery DefaultGrid = new();
+
     [Fact]
     public async Task GetPipelineAsync_CallsGuardBeforeCache_AndRepositoryReceivesResolvedScope()
     {
@@ -15,16 +19,16 @@ public class QuotationAppServiceTests
         var guard = new FakeUnitAccessGuard(_ => resolvedScope);
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
-        var appService = new QuotationAppService(repository, cache, guard);
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
-        DashboardResponse<QuotationPipelineDto> result = await appService.GetPipelineAsync(unitId: null);
+        DashboardResponse<QuotationPipelineResponseDto> result = await appService.GetPipelineAsync(unitId: null, DefaultGrid);
 
         Assert.Equal(1, guard.CallCount);
         Assert.Equal(1, cache.CallCount);
         Assert.Equal(1, repository.CallCount);
         Assert.Same(resolvedScope, repository.LastScope);
         Assert.Equal(CacheKeys.Pipeline(resolvedScope), cache.LastKey);
-        Assert.Equal(DashboardCacheTtls.Pipeline, cache.LastTtl);
+        Assert.Equal(CacheTtls.Pipeline, cache.LastTtl);
         Assert.NotNull(result.Data);
     }
 
@@ -34,12 +38,45 @@ public class QuotationAppServiceTests
         var guard = new FakeUnitAccessGuard(_ => throw new ForbiddenAccessException("outside assignment"));
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
-        var appService = new QuotationAppService(repository, cache, guard);
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
-        await Assert.ThrowsAsync<ForbiddenAccessException>(() => appService.GetPipelineAsync(Guid.NewGuid()));
+        await Assert.ThrowsAsync<ForbiddenAccessException>(() => appService.GetPipelineAsync(Guid.NewGuid(), DefaultGrid));
 
         Assert.Equal(0, cache.CallCount);
         Assert.Equal(0, repository.CallCount);
+    }
+
+    [Fact]
+    public async Task GetPipelineAsync_PagesAndSortsRowsFromTheCachedFullList()
+    {
+        var guard = new FakeUnitAccessGuard(_ => UnitScope.Unrestricted());
+        var cache = new FakeCacheService();
+        var repository = new FakeQuotationRepository
+        {
+            OpenQuotations =
+            [
+                new OpenQuotationDto(Guid.NewGuid(), "QTN-003", "Zara", "Fatema", 300m, "Draft", 3),
+                new OpenQuotationDto(Guid.NewGuid(), "QTN-001", "H&M", "Jahid", 100m, "Draft", 1),
+                new OpenQuotationDto(Guid.NewGuid(), "QTN-002", "Mango", "Mehedi", 200m, "Draft", 2),
+            ],
+        };
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
+
+        DashboardResponse<QuotationPipelineResponseDto> firstPage = await appService.GetPipelineAsync(
+            null, new GridQuery(Page: 1, PageSize: 2, SortField: "valueUsd", SortDescending: false));
+
+        Assert.Equal(3, firstPage.Data.OpenQuotations.TotalCount);
+        Assert.Equal(2, firstPage.Data.OpenQuotations.Items.Count);
+        Assert.Equal("QTN-001", firstPage.Data.OpenQuotations.Items[0].QuotationNo);
+        Assert.Equal("QTN-002", firstPage.Data.OpenQuotations.Items[1].QuotationNo);
+
+        // Only 1 cache/repository call across two different pages of the SAME cached dataset —
+        // paging never bypasses or multiplies the cache-aside call.
+        DashboardResponse<QuotationPipelineResponseDto> secondPage = await appService.GetPipelineAsync(
+            null, new GridQuery(Page: 2, PageSize: 2, SortField: "valueUsd", SortDescending: false));
+
+        Assert.Single(secondPage.Data.OpenQuotations.Items);
+        Assert.Equal("QTN-003", secondPage.Data.OpenQuotations.Items[0].QuotationNo);
     }
 
     [Fact]
@@ -49,17 +86,17 @@ public class QuotationAppServiceTests
         var guard = new FakeUnitAccessGuard(_ => resolvedScope);
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
-        var appService = new QuotationAppService(repository, cache, guard);
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
         var fromDate = new DateOnly(2026, 6, 1);
         var toDate = new DateOnly(2026, 6, 30);
 
-        await appService.GetConversionAsync(Guid.NewGuid(), fromDate, toDate);
+        await appService.GetConversionAsync(Guid.NewGuid(), fromDate, toDate, DefaultGrid);
 
         Assert.Same(resolvedScope, repository.LastScope);
         Assert.Equal(fromDate, repository.LastFromDate);
         Assert.Equal(toDate, repository.LastToDate);
         Assert.Equal(CacheKeys.Conversion(resolvedScope, fromDate, toDate), cache.LastKey);
-        Assert.Equal(DashboardCacheTtls.Conversion, cache.LastTtl);
+        Assert.Equal(CacheTtls.Conversion, cache.LastTtl);
     }
 
     [Fact]
@@ -68,10 +105,10 @@ public class QuotationAppServiceTests
         var guard = new FakeUnitAccessGuard(_ => throw new ForbiddenAccessException("outside assignment"));
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
-        var appService = new QuotationAppService(repository, cache, guard);
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(
-            () => appService.GetConversionAsync(Guid.NewGuid(), new DateOnly(2026, 6, 1), new DateOnly(2026, 6, 30)));
+            () => appService.GetConversionAsync(Guid.NewGuid(), new DateOnly(2026, 6, 1), new DateOnly(2026, 6, 30), DefaultGrid));
 
         Assert.Equal(0, cache.CallCount);
         Assert.Equal(0, repository.CallCount);
@@ -84,13 +121,13 @@ public class QuotationAppServiceTests
         var guard = new FakeUnitAccessGuard(_ => resolvedScope);
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
-        var appService = new QuotationAppService(repository, cache, guard);
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
-        await appService.GetAgingAsync(null);
+        await appService.GetAgingAsync(null, DefaultGrid);
 
         Assert.Same(resolvedScope, repository.LastScope);
         Assert.Equal(CacheKeys.Aging(resolvedScope), cache.LastKey);
-        Assert.Equal(DashboardCacheTtls.Aging, cache.LastTtl);
+        Assert.Equal(CacheTtls.Aging, cache.LastTtl);
     }
 
     [Fact]
@@ -99,12 +136,33 @@ public class QuotationAppServiceTests
         var guard = new FakeUnitAccessGuard(_ => throw new ForbiddenAccessException("outside assignment"));
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
-        var appService = new QuotationAppService(repository, cache, guard);
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
-        await Assert.ThrowsAsync<ForbiddenAccessException>(() => appService.GetAgingAsync(Guid.NewGuid()));
+        await Assert.ThrowsAsync<ForbiddenAccessException>(() => appService.GetAgingAsync(Guid.NewGuid(), DefaultGrid));
 
         Assert.Equal(0, cache.CallCount);
         Assert.Equal(0, repository.CallCount);
+    }
+
+    [Fact]
+    public async Task GetAgingAsync_PagesRowsFromTheCachedFullList()
+    {
+        var guard = new FakeUnitAccessGuard(_ => UnitScope.Unrestricted());
+        var cache = new FakeCacheService();
+        var repository = new FakeQuotationRepository
+        {
+            AgedQuotations =
+            [
+                new AgedQuotationDto(Guid.NewGuid(), "QTN-001", "H&M", 100m, 40, "Submitted", "High"),
+                new AgedQuotationDto(Guid.NewGuid(), "QTN-002", "Zara", 200m, 10, "Draft", "Low"),
+            ],
+        };
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
+
+        DashboardResponse<AgingResponseDto> result = await appService.GetAgingAsync(null, new GridQuery(Page: 1, PageSize: 1));
+
+        Assert.Equal(2, result.Data.AgedQuotations.TotalCount);
+        Assert.Single(result.Data.AgedQuotations.Items);
     }
 
     [Fact]
@@ -113,7 +171,7 @@ public class QuotationAppServiceTests
         var guard = new FakeUnitAccessGuard(_ => UnitScope.Unrestricted());
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
-        var appService = new QuotationAppService(repository, cache, guard);
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
         Guid quotationId = Guid.NewGuid();
 
         await appService.GetByIdAsync(quotationId);
@@ -130,7 +188,7 @@ public class QuotationAppServiceTests
         var guard = new FakeUnitAccessGuard(_ => throw new ForbiddenAccessException("outside assignment"));
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
-        var appService = new QuotationAppService(repository, cache, guard);
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() => appService.GetByIdAsync(Guid.NewGuid()));
 
@@ -145,13 +203,13 @@ public class QuotationAppServiceTests
         var guard = new FakeUnitAccessGuard(_ => resolvedScope);
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
-        var appService = new QuotationAppService(repository, cache, guard);
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
         await appService.GetSummaryAsync(null);
 
         Assert.Same(resolvedScope, repository.LastScope);
         Assert.Equal(CacheKeys.Summary(resolvedScope), cache.LastKey);
-        Assert.Equal(DashboardCacheTtls.Summary, cache.LastTtl);
+        Assert.Equal(CacheTtls.Summary, cache.LastTtl);
     }
 
     [Fact]
@@ -160,7 +218,7 @@ public class QuotationAppServiceTests
         var guard = new FakeUnitAccessGuard(_ => throw new ForbiddenAccessException("outside assignment"));
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
-        var appService = new QuotationAppService(repository, cache, guard);
+        var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() => appService.GetSummaryAsync(Guid.NewGuid()));
 

@@ -4,6 +4,8 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { Mock, vi } from 'vitest';
+import { CurrentUserService } from '../auth/current-user.service';
+import { fakeJwt } from '../auth/testing/fake-jwt';
 import { errorInterceptor } from './error.interceptor';
 
 describe('errorInterceptor', () => {
@@ -29,6 +31,26 @@ describe('errorInterceptor', () => {
   });
 
   afterEach(() => httpTesting.verify());
+
+  it('redirects to /login and clears the token on a 401 response from an already-authenticated request', () => {
+    const currentUser = TestBed.inject(CurrentUserService);
+    currentUser.setToken(fakeJwt({ sub: 'user-1', exp: Math.floor(Date.now() / 1000) + 3600 }));
+
+    httpClient.get('/api/sales/quotations/pipeline').subscribe({ error: () => undefined });
+
+    httpTesting.expectOne('/api/sales/quotations/pipeline').flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+    expect(navigateByUrl).toHaveBeenCalledWith('/login');
+    expect(currentUser.isAuthenticated()).toBe(false);
+  });
+
+  it('never redirects on a 401 from the login endpoint itself — the login page handles that inline', () => {
+    httpClient.post('/api/auth/login', { email: 'a@b.com', password: 'x' }).subscribe({ error: () => undefined });
+
+    httpTesting.expectOne('/api/auth/login').flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+    expect(navigateByUrl).not.toHaveBeenCalled();
+  });
 
   it('redirects to /403 and never shows a toast on a 403 response', () => {
     httpClient.get('/api/sales/quotations/pipeline').subscribe({ error: () => undefined });

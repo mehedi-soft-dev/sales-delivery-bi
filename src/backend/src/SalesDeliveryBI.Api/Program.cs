@@ -58,6 +58,21 @@ try
             };
         });
 
+    // Dev-only CORS for the Angular dev server (`ng serve` on a different origin/port) — production serves the
+    // frontend same-origin behind a reverse proxy (`apiBaseUrl: '/api'`, see frontend architecture.md), so no
+    // CORS policy is registered outside Development.
+    const string DevCorsPolicyName = "DevFrontend";
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(DevCorsPolicyName, policy => policy
+                .WithOrigins("http://localhost:4200", "https://localhost:4200")
+                .AllowAnyHeader()
+                .AllowAnyMethod());
+        });
+    }
+
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddProblemDetails(options =>
     {
@@ -71,6 +86,7 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
+        app.UseCors(DevCorsPolicyName);
 
         using IServiceScope seedScope = app.Services.CreateScope();
         await seedScope.ServiceProvider.GetRequiredService<DatabaseSeeder>().SeedAsync();
@@ -84,6 +100,8 @@ try
 
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.MapGet("/", () => Results.Ok(new { status = "ok", service = "SalesDeliveryBI.Api" })).AllowAnonymous();
 
     app.MapControllers();
 

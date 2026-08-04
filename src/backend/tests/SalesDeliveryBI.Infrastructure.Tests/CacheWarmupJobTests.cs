@@ -30,7 +30,7 @@ public class CacheWarmupJobTests
             .Build();
 
         IQuotationRepository repository = repositoryOverride ?? new QuotationRepository(new DapperContext(configuration), configuration);
-        return new CacheWarmupJob(repository, cache, NullLogger<CacheWarmupJob>.Instance);
+        return new CacheWarmupJob(repository, cache, NullLogger<CacheWarmupJob>.Instance, new CacheTtlOptions());
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class CacheWarmupJobTests
     {
         var job = new CacheWarmupJob(new ThrowingQuotationRepository(), new RedisCacheService(
             ConnectionMultiplexer.Connect(RedisConnectionString), NullLogger<RedisCacheService>.Instance),
-            NullLogger<CacheWarmupJob>.Instance);
+            NullLogger<CacheWarmupJob>.Instance, new CacheTtlOptions());
 
         Exception? exception = await Record.ExceptionAsync(
             () => job.WarmUpAsync(CacheWarmupJob.SalesQuotationSummaryMv, CancellationToken.None));

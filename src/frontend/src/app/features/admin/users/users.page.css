@@ -1,0 +1,27 @@
+.users-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.users-page__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--p-text-muted-color);
+  background: var(--p-surface-100);
+}
+
+.users-page__status--active {
+  color: #0ca30c;
+  background: #ecfdf3;
+}
+
+.users-page__empty {
+  text-align: center;
+  color: var(--p-text-muted-color);
+  padding: 1.5rem;
+}

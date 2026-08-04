@@ -1,0 +1,24 @@
+.buyer-performance-grid {
+  display: block;
+  width: 100%;
+}
+
+:host ::ng-deep .buyer-performance-grid .p-datatable-table-container {
+  overflow-x: auto;
+}
+
+.buyer-performance-grid__col--right {
+  text-align: right;
+}
+
+.buyer-performance-grid__empty {
+  text-align: center;
+  color: var(--p-text-muted-color);
+  padding: 1.5rem;
+}
+
+@media (max-width: 767px) {
+  :host ::ng-deep .buyer-performance-grid .buyer-performance-grid__col--low-priority {
+    display: none;
+  }
+}

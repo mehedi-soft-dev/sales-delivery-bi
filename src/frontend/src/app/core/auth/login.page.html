@@ -1,0 +1,104 @@
+<div class="login-page">
+  <div class="login-page__hero">
+    <div class="login-page__hero-content">
+      <span class="login-page__brand">
+        <span class="login-page__brand-mark">
+          <svg data-p-icon="chart-bar" size="20"></svg>
+        </span>
+        <span class="login-page__brand-name">Sales Delivery BI</span>
+      </span>
+
+      <h1 class="login-page__hero-title">Sales quotation intelligence, in one dashboard.</h1>
+      <p class="login-page__hero-subtitle">
+        Track pipeline health, conversion performance, and aging risk across every unit — refreshed on schedule,
+        secured by role.
+      </p>
+
+      <ul class="login-page__hero-features">
+        <li>
+          <span class="login-page__hero-feature-icon">
+            <svg data-p-icon="chart-line" size="16"></svg>
+          </span>
+          Pipeline &amp; open quotation value
+        </li>
+        <li>
+          <span class="login-page__hero-feature-icon">
+            <svg data-p-icon="percentage" size="16"></svg>
+          </span>
+          Conversion &amp; win/loss trends
+        </li>
+        <li>
+          <span class="login-page__hero-feature-icon">
+            <svg data-p-icon="clock" size="16"></svg>
+          </span>
+          Aging &amp; high-risk exposure
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="login-page__panel">
+    <form class="login-card" (ngSubmit)="onSubmit()">
+      <span class="login-card__brand">
+        <span class="login-card__brand-mark">
+          <svg data-p-icon="chart-bar" size="18"></svg>
+        </span>
+        <span class="login-card__brand-name">Sales Delivery BI</span>
+      </span>
+
+      <div class="login-card__intro">
+        <h1 class="login-card__title">Welcome back</h1>
+        <p class="login-card__subtitle">Sign in to view your dashboards</p>
+      </div>
+
+      @if (errorMessage()) {
+        <p-message severity="error" [text]="errorMessage()!" styleClass="login-card__error" />
+      }
+
+      <label class="login-card__field">
+        <span>Email</span>
+        <p-iconfield>
+          <p-inputicon>
+            <svg data-p-icon="envelope" size="15"></svg>
+          </p-inputicon>
+          <input
+            pInputText
+            type="email"
+            name="email"
+            autocomplete="username"
+            [(ngModel)]="email"
+            [disabled]="submitting()"
+            required
+          />
+        </p-iconfield>
+      </label>
+
+      <div class="login-card__field">
+        <label for="password">Password</label>
+        <p-iconfield>
+          <p-inputicon>
+            <svg data-p-icon="lock" size="15"></svg>
+          </p-inputicon>
+          <p-password
+            inputId="password"
+            [(ngModel)]="password"
+            name="password"
+            [feedback]="false"
+            [toggleMask]="true"
+            autocomplete="current-password"
+            [disabled]="submitting()"
+            inputStyleClass="login-card__password-input"
+          />
+        </p-iconfield>
+      </div>
+
+      <p-button
+        type="submit"
+        label="Sign in"
+        [loading]="submitting()"
+        [disabled]="!email || !password"
+        styleClass="login-card__submit"
+      />
+    </form>
+  </div>
+</div>

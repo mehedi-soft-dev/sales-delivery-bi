@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { Shell } from './layout/shell';
 import { authGuard } from './core/auth/auth.guard';
+import { adminGuard } from './core/auth/admin.guard';
 
 export const routes: Routes = [
   {
@@ -21,7 +22,51 @@ export const routes: Routes = [
         path: 'aging',
         loadComponent: () => import('./features/quotation-aging/aging.page').then((m) => m.AgingPage),
       },
+      {
+        path: 'reports',
+        loadComponent: () => import('./features/coming-soon/coming-soon.page').then((m) => m.ComingSoonPage),
+        data: { title: 'Report', icon: 'chart-pie' },
+      },
+      {
+        path: 'dashboard/sales-orders',
+        loadComponent: () => import('./features/coming-soon/coming-soon.page').then((m) => m.ComingSoonPage),
+        data: { title: 'Sales Orders', icon: 'shopping-cart' },
+      },
+      {
+        path: 'dashboard/delivery',
+        loadComponent: () => import('./features/coming-soon/coming-soon.page').then((m) => m.ComingSoonPage),
+        data: { title: 'Delivery / Challan', icon: 'truck' },
+      },
+      {
+        path: 'dashboard/invoice',
+        loadComponent: () => import('./features/coming-soon/coming-soon.page').then((m) => m.ComingSoonPage),
+        data: { title: 'Sales Invoice', icon: 'receipt' },
+      },
+      {
+        path: 'dashboard/return',
+        loadComponent: () => import('./features/coming-soon/coming-soon.page').then((m) => m.ComingSoonPage),
+        data: { title: 'Return / Credit Note', icon: 'reply' },
+      },
+      {
+        path: 'admin/users',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/admin/users/users.page').then((m) => m.UsersPage),
+      },
+      {
+        path: 'admin/roles',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/admin/roles/roles.page').then((m) => m.RolesPage),
+      },
+      {
+        path: 'admin/permissions',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/admin/permissions/permissions.page').then((m) => m.PermissionsPage),
+      },
     ],
+  },
+  {
+    path: 'login',
+    loadComponent: () => import('./core/auth/login.page').then((m) => m.LoginPage),
   },
   {
     path: '403',

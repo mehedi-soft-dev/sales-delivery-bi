@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SalesDeliveryBI.Application.Common;
 using SalesDeliveryBI.Application.Dtos;
 using SalesDeliveryBI.Application.Services;
 using SalesDeliveryBI.Infrastructure.Security;
@@ -20,33 +21,36 @@ public class QuotationsController : ControllerBase
     }
 
     [HttpGet("pipeline")]
-    public async Task<ActionResult<DashboardResponse<QuotationPipelineDto>>> GetPipeline(
+    public async Task<ActionResult<DashboardResponse<QuotationPipelineResponseDto>>> GetPipeline(
         [FromQuery] Guid? unitId,
+        [FromQuery] GridQuery grid,
         CancellationToken cancellationToken)
     {
-        return Ok(await _appService.GetPipelineAsync(unitId, cancellationToken));
+        return Ok(await _appService.GetPipelineAsync(unitId, grid, cancellationToken));
     }
 
     [HttpGet("conversion")]
-    public async Task<ActionResult<DashboardResponse<ConversionDto>>> GetConversion(
+    public async Task<ActionResult<DashboardResponse<ConversionResponseDto>>> GetConversion(
         [FromQuery] Guid? unitId,
         [FromQuery] DateOnly? fromDate,
         [FromQuery] DateOnly? toDate,
+        [FromQuery] GridQuery grid,
         CancellationToken cancellationToken)
     {
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
         DateOnly effectiveFromDate = fromDate ?? new DateOnly(today.Year, today.Month, 1);
         DateOnly effectiveToDate = toDate ?? today;
 
-        return Ok(await _appService.GetConversionAsync(unitId, effectiveFromDate, effectiveToDate, cancellationToken));
+        return Ok(await _appService.GetConversionAsync(unitId, effectiveFromDate, effectiveToDate, grid, cancellationToken));
     }
 
     [HttpGet("aging")]
-    public async Task<ActionResult<DashboardResponse<AgingDto>>> GetAging(
+    public async Task<ActionResult<DashboardResponse<AgingResponseDto>>> GetAging(
         [FromQuery] Guid? unitId,
+        [FromQuery] GridQuery grid,
         CancellationToken cancellationToken)
     {
-        return Ok(await _appService.GetAgingAsync(unitId, cancellationToken));
+        return Ok(await _appService.GetAgingAsync(unitId, grid, cancellationToken));
     }
 
     [HttpGet("summary")]

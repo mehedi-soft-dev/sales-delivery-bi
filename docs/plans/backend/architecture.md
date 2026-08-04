@@ -45,29 +45,37 @@ SalesDeliveryBI.sln
 ├── src/
 │   ├── SalesDeliveryBI.Domain            (no dependencies — pure C#)
 │   │   ├── Common/           BaseEntity, Result<T>, Guard clauses
-│   │   ├── Entities/         Unit, Buyer, Merchandiser, User, UserUnit, FxRate, Quotation
-│   │   ├── Enums/            QuotationStatus, UserRole
+│   │   ├── Entities/         Unit, Buyer, Merchandiser, User, Role, RolePermission, UserUnit, RoleNames, FxRate, Quotation
+│   │   ├── Enums/            QuotationStatus
 │   │   └── ValueObjects/     Money, DateRange
 │   │
 │   ├── SalesDeliveryBI.Application       (depends on: Domain only)
-│   │   ├── Abstractions/     IQuotationRepository, ICacheService, ICurrentUserContext, IUnitAccessGuard
-│   │   ├── Dtos/             QuotationPipelineDto, ConversionDto, AgingDto, QuotationDetailDto, QuotationSummaryDto
-│   │   ├── Services/         QuotationAppService (GetPipelineAsync, GetConversionAsync, GetAgingAsync, GetByIdAsync, GetSummaryAsync)
+│   │   ├── Abstractions/     IQuotationRepository, ICacheService, ICurrentUserContext, IUnitAccessGuard,
+│   │   │                     IUserRepository, IPasswordHasher, IJwtTokenGenerator (real login, docs/plans/security/security-plan.md §6)
+│   │   ├── Dtos/             QuotationPipelineDto, ConversionDto, AgingDto, QuotationDetailDto, QuotationSummaryDto,
+│   │   │                     LoginRequestDto, LoginResponseDto
+│   │   ├── Services/         QuotationAppService (GetPipelineAsync, GetConversionAsync, GetAgingAsync, GetByIdAsync, GetSummaryAsync),
+│   │   │                     AuthAppService (LoginAsync)
 │   │   └── DependencyInjection.cs
 │   │
 │   ├── SalesDeliveryBI.Infrastructure     (depends on: Application + Domain)
 │   │   ├── Persistence/
 │   │   │   ├── EfCore/        AppDbContext (Code First, owns `sales` schema entities + migrations),
-│   │   │   │                  EntityConfigurations/ (Fluent API per entity), AuditableEntitySaveChangesInterceptor
+│   │   │   │                  EntityConfigurations/ (Fluent API per entity), AuditableEntitySaveChangesInterceptor,
+│   │   │   │                  UserRepository (EF Core — Users isn't a `bi.*` view, so this stays EF not Dapper;
+│   │   │   │                  eager-loads Role.RolePermissions + UserUnits in one round trip)
 │   │   │   ├── Migrations/    EF Core migrations for `sales` schema + raw-SQL migrations for `bi` schema (MVs, refresh log, pg_cron)
 │   │   │   └── Dapper/        DapperContext, QuotationRepository (reads bi.mv_sales_quotation_summary — read path stays Dapper, not EF, per MV performance rationale)
 │   │   ├── Caching/          RedisCacheService (cache-aside + stampede lock)
-│   │   ├── Security/         CurrentUserContext (reads JWT claims: sub, permissions, user_units), UnitAccessGuard (validates/resolves unitId against the claims)
+│   │   ├── Security/         CurrentUserContext (reads JWT claims: sub, permissions, user_units), UnitAccessGuard (validates/resolves unitId against the claims),
+│   │   │                     PasswordHasher (BCrypt.Net-Next), JwtTokenGenerator (reads permission codes off the
+│   │   │                     loaded Role.RolePermissions — no separate lookup)
 │   │   ├── Jobs/             CacheWarmupJob — Quartz.NET, triggered post pg_cron refresh
 │   │   └── DependencyInjection.cs
 │   │
 │   └── SalesDeliveryBI.Api                (composition root — depends on Application + Infrastructure)
-│       ├── Controllers/      QuotationsController (thin — calls QuotationAppService directly, no mediator indirection)
+│       ├── Controllers/      QuotationsController (thin — calls QuotationAppService directly, no mediator indirection),
+│       │                     AuthController (POST /api/auth/login — anonymous, no [Authorize])
 │       ├── Middleware/       ExceptionHandling, JwtClaims
 │       ├── Program.cs
 │       └── appsettings.json

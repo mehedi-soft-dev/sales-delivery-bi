@@ -2,7 +2,9 @@
 
 **Principle:** access control is enforced server-side, in the repository layer, on every request. The frontend never decides what a user can see — it only reflects what the API already filtered.
 
-**Decision:** User/Role/Permission management is a **dynamic RBAC system**, owned by a **separate Identity service/repo** (not this solution). SalesDeliveryBI is a **pure JWT consumer** — it never creates/edits users, roles, or permissions; it only validates the token and checks permission claims. See `docs/plans/identity/` (separate module) for that service's own design.
+**Decision (original):** User/Role/Permission management was originally planned as a dynamic RBAC system owned by a separate Identity service/repo, with SalesDeliveryBI as a pure JWT consumer that never creates/edits users, roles, or permissions.
+
+**Revised (discussed with the user, see §5/§6 below):** that separate service was never built, and the user asked for a real, working login flow against this app's own Angular frontend — hand-minted test JWTs weren't sufficient. `User`/`Role`/`UserUnit`/`RolePermission` are now real EF Core entities in `SalesDeliveryBI.Domain`/`sales` schema, and `POST /api/auth/login` issues real JWTs from this process. Roles are real seeded table rows (`sales.Roles`, matching the 7 names in `docs/requirements/Sales_Delivery_Module_BI_Developer_Guidelines.md` §5), and role→permission mapping is a real seeded table too (`sales.RolePermissions`, resolving a role to the 2 permission codes this API actually checks) — not an in-code static mapping. This is a scope-contained version of "the Identity service" — no admin CRUD UI for users/roles/permissions was added (§5 below), only login + the entities/seed data needed to make it real.
 
 ---
 
@@ -72,13 +74,15 @@ All 5 quotation endpoints require `QuotationRead`. The distinction between "all 
 
 ## 5. What Is Explicitly Out of Scope Here
 
-- **User/Role/Permission CRUD** — creating users, defining roles, assigning permissions to roles, assigning units to users. All owned by the separate Identity service.
-- **Authentication** (login, token issuance/refresh) — owned by the Identity service.
-- **Write-side authorization** (who can create/edit a quotation) — owned by the OLTP transactional module (also separate from this BI reporting API).
-- This module only authorizes **read access to BI/reporting data**, based on permission claims it receives, never claims it computes.
+- **User/Role/Permission admin CRUD** — no UI or endpoint to create/edit/delete users, roles, or role→permission mappings. The dev login users (one per seeded role), 7 seeded roles, and their `sales.RolePermissions` mapping rows come only from `DatabaseSeeder` (`IsDevelopment()`-guarded, same as the rest of the seed data) — there's no write path for any of it at runtime.
+- **Token refresh** — `POST /api/auth/login` issues a single 8-hour token; no refresh-token flow exists. Re-login is the only way to get a new token once one expires.
+- **Write-side authorization** (who can create/edit a quotation) — still owned by the (not-yet-built) OLTP transactional module, unrelated to login.
+- This module authorizes **read access to BI/reporting data**, based on permission claims resolved from the caller's seeded `Role` at login time — never claims computed per-request.
 
 ---
 
-## 6. Open Dependency
+## 6. Resolved: Real Login, Fixed-Enum-Style Roles (not dynamic RBAC)
 
-The Identity service doesn't exist yet either — needs its own architecture pass (Domain: `User`, `Role`, `Permission`, `RolePermission`, `UserRole`, `UserUnit`; Application: Commands for CRUD + Queries for admin screens; own DB, own JWT-issuing endpoint). Track separately — this BI solution only needs the contract in §2 to be honored, not to know how the Identity service is built internally.
+The Identity-service dependency this section used to describe is resolved for this project: `Domain/Entities/User.cs`, `Role.cs`, `RolePermission.cs`, `UserUnit.cs` (+ `RoleNames` constants) live in `SalesDeliveryBI.Domain`; `AuthAppService` (Application), `PasswordHasher`/`JwtTokenGenerator`/`UserRepository` (Infrastructure/Security), and `AuthController` (`POST /api/auth/login`) implement the actual login flow.
+
+**Revised (discussed with the user): role→permission mapping is a real DB table**, not the in-code static dictionary this section originally described. `sales.RolePermissions` (`RoleId`, `PermissionCode`, unique index on the pair) is seeded by `DatabaseSeeder` alongside the 7 roles — this API still only ever checks 2 permission codes (`bi.quotation.view`, `bi.quotation.viewAllUnits`), so the table stays a simple join, not a full admin-editable `Permission` catalog. `UserRepository.FindByEmailAsync` eager-loads `Role.RolePermissions` in the same query as `Role`/`UserUnits`, and `JwtTokenGenerator` reads permission codes off `user.Role.RolePermissions` directly — no separate lookup or in-code mapping table. Deliberately still **not** built: a full `Permission` catalog table or any admin CRUD over roles/permissions — `RolePermissions` rows only ever come from `DatabaseSeeder`.

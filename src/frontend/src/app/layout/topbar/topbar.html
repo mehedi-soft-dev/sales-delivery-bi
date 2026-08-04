@@ -1,40 +1,135 @@
-<p-toolbar styleClass="topbar" ariaLabelledBy="app-brand">
+<p-toolbar class="topbar" ariaLabelledBy="app-brand">
   <ng-template #start>
-    <button type="button" class="topbar__menu-btn" (click)="menuToggle.emit()" aria-label="Toggle navigation">
+    <button
+      type="button"
+      class="topbar__icon-btn topbar__menu-btn"
+      (click)="menuToggle.emit()"
+      aria-label="Toggle navigation"
+    >
       <svg data-p-icon="bars" size="20"></svg>
     </button>
-    <span id="app-brand" class="topbar__brand">SalesDeliveryBI</span>
+
+    <button
+      type="button"
+      class="topbar__icon-btn topbar__collapse-btn"
+      (click)="collapseToggle.emit()"
+      [attr.aria-pressed]="sidebarCollapsed()"
+      aria-label="Collapse sidebar"
+    >
+      <svg data-p-icon="bars" size="20"></svg>
+    </button>
+
+    <nav class="topbar__breadcrumb" aria-label="Breadcrumb">
+      @if (breadcrumb(); as crumb) {
+        @for (ancestor of crumb.ancestors; track ancestor.label) {
+          <span class="topbar__breadcrumb-root">{{ ancestor.label }}</span>
+          <span class="topbar__breadcrumb-sep">/</span>
+        }
+        <span class="topbar__breadcrumb-icon">
+          @switch (crumb.leaf.iconName) {
+            @case ('home') {
+              <svg data-p-icon="home" size="14"></svg>
+            }
+            @case ('folder') {
+              <svg data-p-icon="folder" size="14"></svg>
+            }
+            @case ('chart-line') {
+              <svg data-p-icon="chart-line" size="14"></svg>
+            }
+            @case ('percentage') {
+              <svg data-p-icon="percentage" size="14"></svg>
+            }
+            @case ('clock') {
+              <svg data-p-icon="clock" size="14"></svg>
+            }
+            @case ('shopping-cart') {
+              <svg data-p-icon="shopping-cart" size="14"></svg>
+            }
+            @case ('truck') {
+              <svg data-p-icon="truck" size="14"></svg>
+            }
+            @case ('receipt') {
+              <svg data-p-icon="receipt" size="14"></svg>
+            }
+            @case ('reply') {
+              <svg data-p-icon="reply" size="14"></svg>
+            }
+            @case ('chart-pie') {
+              <svg data-p-icon="chart-pie" size="14"></svg>
+            }
+            @case ('shield') {
+              <svg data-p-icon="shield" size="14"></svg>
+            }
+            @case ('users') {
+              <svg data-p-icon="users" size="14"></svg>
+            }
+            @case ('sitemap') {
+              <svg data-p-icon="sitemap" size="14"></svg>
+            }
+            @case ('key') {
+              <svg data-p-icon="key" size="14"></svg>
+            }
+          }
+        </span>
+        <span class="topbar__breadcrumb-current">{{ crumb.leaf.label }}</span>
+      }
+    </nav>
+  </ng-template>
+
+  <ng-template #center>
+    <div class="topbar__search">
+      <svg data-p-icon="search" size="15"></svg>
+      <input #searchInput type="text" placeholder="Search anything..." class="topbar__search-input" />
+      <kbd class="topbar__search-kbd">⌘K</kbd>
+    </div>
   </ng-template>
 
   <ng-template #end>
-    <span class="topbar__unit">
-      <svg data-p-icon="building" size="16"></svg>
-      {{ unitLabel() }}
-    </span>
+    <div class="topbar__unit">
+      <svg data-p-icon="building" size="15"></svg>
+      <p-select
+        [options]="unitFilterStore.unitOptions()"
+        optionLabel="label"
+        optionValue="id"
+        [ngModel]="unitFilterStore.unitId()"
+        (ngModelChange)="unitFilterStore.setUnitId($event)"
+        ariaLabel="Unit"
+        styleClass="topbar__unit-select"
+      />
+    </div>
 
-    <span class="topbar__user">
-      <button
-        type="button"
-        class="topbar__user-btn"
-        (click)="toggleUserMenu($event)"
-        aria-haspopup="menu"
-        [attr.aria-expanded]="userMenuOpen()"
-        aria-label="User menu"
-      >
-        @if (userInitials()) {
-          <p-avatar [label]="userInitials()!" shape="circle" />
-        } @else {
-          <svg data-p-icon="user" size="20"></svg>
-        }
-      </button>
+    <button type="button" class="topbar__icon-btn" aria-label="Notifications">
+      <svg data-p-icon="bell" size="18"></svg>
+    </button>
 
-      @if (userMenuOpen()) {
-        <div class="topbar__user-panel" role="menu">
-          <button type="button" role="menuitem" class="topbar__user-panel-item" (click)="onLogoutClick()">
-            Log out
-          </button>
-        </div>
+    <button type="button" class="topbar__user-btn" (click)="userPopover.toggle($event)" aria-haspopup="true">
+      @if (userInitials()) {
+        <p-avatar [label]="userInitials()!" shape="circle" size="normal" />
+      } @else {
+        <svg data-p-icon="user" size="20"></svg>
       }
-    </span>
+      <span class="topbar__user-text">
+        <span class="topbar__user-name">{{ userDisplayName() ?? 'Account' }}</span>
+        @if (userRole()) {
+          <span class="topbar__user-role">{{ userRole() }}</span>
+        }
+      </span>
+      <svg data-p-icon="chevron-down" size="12" class="topbar__user-chevron"></svg>
+    </button>
+
+    <p-popover #userPopover>
+      <div class="topbar__user-panel">
+        <div class="topbar__user-panel-header">
+          <span class="topbar__user-panel-name">{{ userDisplayName() ?? 'Account' }}</span>
+          @if (userRole()) {
+            <span class="topbar__user-panel-role">{{ userRole() }}</span>
+          }
+        </div>
+        <button type="button" class="topbar__user-panel-item" (click)="userPopover.hide(); onLogoutClick()">
+          <svg data-p-icon="sign-out" size="16"></svg>
+          Log out
+        </button>
+      </div>
+    </p-popover>
   </ng-template>
 </p-toolbar>

@@ -1,0 +1,43 @@
+<div class="pipeline-page">
+  <app-page-header title="Quotation Pipeline" subtitle="Track and manage all quotations across your organization" icon="chart-line">
+    <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
+  </app-page-header>
+
+  @if (service.loading() && !service.data()) {
+    <app-loading-skeleton [kpiCount]="4" [contentBlockHeights]="[260, 420]" />
+  } @else if (service.error()) {
+    <div class="dashboard-state dashboard-state--error" role="alert">
+      Something went wrong loading the pipeline dashboard. Please try again.
+    </div>
+  } @else if (service.data(); as pipeline) {
+    <div class="dashboard-kpis">
+      <app-kpi-card label="Open Quotations" [value]="asCount(pipeline.kpis.openQuotationsCount)" icon="file" accent="blue" />
+      <app-kpi-card
+        label="Pipeline Value"
+        [value]="pipeline.kpis.pipelineValueUsd | currencyUsd"
+        icon="wallet"
+        accent="green"
+      />
+      <app-kpi-card
+        label="Pending Approval"
+        [value]="asCount(pipeline.kpis.pendingApprovalCount)"
+        icon="hourglass"
+        accent="amber"
+      />
+      <app-kpi-card label="Avg. Days Open" [value]="pipeline.kpis.avgDaysOpen | daysOpen" icon="calendar-clock" accent="blue" />
+    </div>
+
+    <div class="dashboard-card">
+      <h2>Quotations by Status</h2>
+      <app-status-funnel-chart [entries]="pipeline.statusFunnel" />
+    </div>
+
+    <div class="dashboard-card__header">
+      <h2>Open Quotations</h2>
+      <span class="dashboard-card__count-badge">{{ pipeline.openQuotations.totalCount }} Records</span>
+    </div>
+    <div class="dashboard-card dashboard-card--table">
+      <app-pipeline-grid [page]="pipeline.openQuotations" [loading]="service.loading()" (lazyLoad)="onLazyLoad($event)" />
+    </div>
+  }
+</div>

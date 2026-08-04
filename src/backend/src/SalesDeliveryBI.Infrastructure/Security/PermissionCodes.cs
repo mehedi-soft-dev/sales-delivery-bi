@@ -5,4 +5,7 @@ public static class PermissionCodes
 {
     public const string QuotationView = "bi.quotation.view";
     public const string QuotationViewAllUnits = "bi.quotation.viewAllUnits";
+
+    /// <summary>View-only access to Admin > Users/Roles/Permissions — seeded to SuperAdmin only (DatabaseSeeder).</summary>
+    public const string AdminView = "admin.access.view";
 }

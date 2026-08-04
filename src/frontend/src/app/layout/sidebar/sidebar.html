@@ -1,39 +1,28 @@
-<ng-template #navList>
-  <nav class="sidebar-nav" aria-label="Dashboards">
-    <a
-      routerLink="/pipeline"
-      routerLinkActive="sidebar-nav__link--active"
-      class="sidebar-nav__link"
-      (click)="mobileOpen.set(false)"
-    >
-      <svg data-p-icon="chart-line" size="20"></svg>
-      <span class="sidebar-nav__label">Pipeline</span>
-    </a>
-    <a
-      routerLink="/conversion"
-      routerLinkActive="sidebar-nav__link--active"
-      class="sidebar-nav__link"
-      (click)="mobileOpen.set(false)"
-    >
-      <svg data-p-icon="percentage" size="20"></svg>
-      <span class="sidebar-nav__label">Conversion &amp; Win/Loss</span>
-    </a>
-    <a
-      routerLink="/aging"
-      routerLinkActive="sidebar-nav__link--active"
-      class="sidebar-nav__link"
-      (click)="mobileOpen.set(false)"
-    >
-      <svg data-p-icon="clock" size="20"></svg>
-      <span class="sidebar-nav__label">Aging</span>
-    </a>
+<ng-template #navList let-isCollapsed="isCollapsed">
+  <nav class="sidebar-nav" aria-label="Main">
+    @for (node of visibleNav(); track node.label) {
+      <app-nav-node
+        [node]="node"
+        [depth]="0"
+        [isCollapsed]="isCollapsed"
+        (leafClick)="onLeafClick()"
+        (expandRequest)="expandRequest.emit()"
+      />
+    }
   </nav>
 </ng-template>
 
-<aside class="sidebar-static">
-  <ng-container [ngTemplateOutlet]="navList" />
+<aside class="sidebar-static" [class.sidebar-static--collapsed]="collapsed()">
+  <div class="sidebar-brand">
+    <span class="sidebar-brand__mark">
+      <svg data-p-icon="chart-bar" size="18"></svg>
+    </span>
+    <span class="sidebar-brand__name">Sales Delivery BI</span>
+  </div>
+
+  <ng-container [ngTemplateOutlet]="navList" [ngTemplateOutletContext]="{ isCollapsed: collapsed() }" />
 </aside>
 
-<p-drawer [(visible)]="mobileOpen" position="left" [modal]="true" styleClass="sidebar-drawer" header="Dashboards">
-  <ng-container [ngTemplateOutlet]="navList" />
+<p-drawer [(visible)]="mobileOpen" position="left" [modal]="true" styleClass="sidebar-drawer" header="Menu">
+  <ng-container [ngTemplateOutlet]="navList" [ngTemplateOutletContext]="{ isCollapsed: false }" />
 </p-drawer>

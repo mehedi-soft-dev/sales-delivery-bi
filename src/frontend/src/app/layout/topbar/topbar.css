@@ -3,18 +3,42 @@
 }
 
 .topbar {
+  position: relative;
   height: var(--topbar-height, 64px);
-  padding: 0 1rem;
+  padding: 0 1.25rem;
   border-radius: 0;
   border: none;
-  border-bottom: 1px solid var(--p-content-border-color);
+  background: var(--p-content-background);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
 }
 
-.topbar__menu-btn,
+:host ::ng-deep .topbar .p-toolbar-start,
+:host ::ng-deep .topbar .p-toolbar-end {
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+:host ::ng-deep .topbar .p-toolbar-start {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Absolutely centered on the full topbar width, independent of how wide the start/end slots are —
+   a plain flex `center` slot would only center within the leftover space between them. */
+:host ::ng-deep .topbar .p-toolbar-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+.topbar__icon-btn,
 .topbar__user-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: none;
   border: none;
   background: transparent;
   color: var(--p-text-color);
@@ -23,7 +47,7 @@
   border-radius: var(--p-content-border-radius);
 }
 
-.topbar__menu-btn:hover,
+.topbar__icon-btn:hover,
 .topbar__user-btn:hover {
   background: var(--p-content-hover-background);
 }
@@ -32,42 +56,164 @@
   display: none;
 }
 
-.topbar__brand {
-  margin-left: 0.5rem;
-  font-weight: 600;
-  font-size: 1.05rem;
+.topbar__collapse-btn {
+  display: none;
+}
+
+.topbar__breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  flex: none;
+  font-size: 0.875rem;
   white-space: nowrap;
+}
+
+.topbar__breadcrumb-root {
+  color: var(--p-text-muted-color);
+}
+
+.topbar__breadcrumb-sep {
+  color: var(--p-content-border-color);
+}
+
+.topbar__breadcrumb-icon {
+  display: inline-flex;
+  color: var(--p-primary-600, var(--p-primary-color));
+}
+
+.topbar__breadcrumb-current {
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+.topbar__search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 22rem;
+  margin-left: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: var(--p-surface-100);
+  color: var(--p-text-muted-color);
+}
+
+.topbar__search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.875rem;
+  color: var(--p-text-color);
+}
+
+.topbar__search-input::placeholder {
+  color: var(--p-text-muted-color);
+}
+
+.topbar__search-kbd {
+  flex: none;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 5px;
+  border: 1px solid var(--p-content-border-color);
+  background: var(--p-content-background);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  color: var(--p-text-muted-color);
 }
 
 .topbar__unit {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  color: var(--p-text-muted-color);
+  padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: var(--p-primary-50, var(--p-content-hover-background));
+  color: var(--p-primary-700, var(--p-text-color));
+  flex: none;
+}
+
+:host ::ng-deep .topbar__unit-select.p-select {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  min-width: 0;
+}
+
+:host ::ng-deep .topbar__unit-select .p-select-label {
+  padding: 0.3125rem 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--p-primary-700, var(--p-text-color));
+}
+
+:host ::ng-deep .topbar__unit-select .p-select-dropdown {
+  color: var(--p-primary-600, var(--p-primary-color));
+  width: 1.5rem;
+}
+
+.topbar__user-btn {
+  gap: 0.5rem;
+  padding: 0.25rem 0.625rem 0.25rem 0.3125rem;
+}
+
+.topbar__user-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.topbar__user-name {
   font-size: 0.875rem;
+  font-weight: 600;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.topbar__user {
-  position: relative;
-  display: inline-flex;
+.topbar__user-role {
+  font-size: 0.6875rem;
+  color: var(--p-text-muted-color);
+}
+
+.topbar__user-chevron {
+  color: var(--p-text-muted-color);
 }
 
 .topbar__user-panel {
-  position: absolute;
-  top: calc(100% + 0.375rem);
-  right: 0;
-  min-width: 10rem;
-  background: var(--p-content-background);
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-content-border-radius);
-  box-shadow: var(--p-overlay-popover-shadow, 0 4px 12px rgb(0 0 0 / 0.12));
+  min-width: 12rem;
   padding: 0.25rem;
-  z-index: 25;
+}
+
+.topbar__user-panel-header {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.75rem 0.375rem;
+  border-bottom: 1px solid var(--p-content-border-color);
+  margin-bottom: 0.25rem;
+}
+
+.topbar__user-panel-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+.topbar__user-panel-role {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
 }
 
 .topbar__user-panel-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
   text-align: left;
   border: none;
@@ -88,7 +234,29 @@
     display: inline-flex;
   }
 
-  .topbar__brand {
-    margin-left: 0.25rem;
+  .topbar__search {
+    display: none;
+  }
+
+  .topbar__user-text {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .topbar__collapse-btn {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 1023px) {
+  .topbar__search {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .topbar__unit {
+    display: none;
   }
 }

@@ -6,7 +6,7 @@
 
 ## Stack
 
-- Angular 22 (latest) — standalone components + signals (no NgModule sprawl for new features). Verify AG Grid Angular wrapper + PrimeNG + `ng-apexcharts` peer-dep compatibility with v22 before scaffolding; pin to the highest version all three support if one lags.
+- Angular 21 — standalone components + signals (no NgModule sprawl for new features). Verify AG Grid Angular wrapper + PrimeNG + `ng-apexcharts` peer-dep compatibility with v21 before scaffolding; pin to the highest version all three support if one lags. **Not Angular 22**: PrimeNG 22.x requires a paid license key with no pre-license version supporting Angular 22 — see `CLAUDE.md` §4 and `checklist.md` Phase 0.
 - AG Grid Community (grids) + PrimeNG (cards/inputs) + **ApexCharts** via `ng-apexcharts` (all charts — conversion trend line, win/loss bar, aging buckets bar)
 - No NgRx — dashboards are read-only, filter-driven views; a lightweight per-feature signal-based store is enough. Reassess only if cross-dashboard shared state grows complex.
 

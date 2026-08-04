@@ -3,8 +3,10 @@ using System.Reflection;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SalesDeliveryBI.Application.Abstractions;
 using SalesDeliveryBI.Domain.Entities;
 using SalesDeliveryBI.Domain.Enums;
+using SalesDeliveryBI.Infrastructure.Security;
 
 namespace SalesDeliveryBI.Infrastructure.Persistence.EfCore.Seed;
 
@@ -59,12 +61,65 @@ public class DatabaseSeeder
             ["Sweater"] = ("Men's Sweater", "Men's Cardigan"),
         };
 
+    private static readonly (Guid Id, string Name)[] SeedRoles =
+    [
+        (Guid.Parse("55555555-5555-5555-5555-555555555501"), RoleNames.SuperAdmin),
+        (Guid.Parse("55555555-5555-5555-5555-555555555502"), RoleNames.GeneralManager),
+        (Guid.Parse("55555555-5555-5555-5555-555555555503"), RoleNames.CommercialManager),
+        (Guid.Parse("55555555-5555-5555-5555-555555555504"), RoleNames.CommercialOfficer),
+        (Guid.Parse("55555555-5555-5555-5555-555555555505"), RoleNames.Merchandiser),
+        (Guid.Parse("55555555-5555-5555-5555-555555555506"), RoleNames.FinanceManager),
+        (Guid.Parse("55555555-5555-5555-5555-555555555507"), RoleNames.Viewer),
+    ];
+
+    /// <summary>
+    /// Role → permission-code mapping (docs/requirements/Sales_Delivery_Module_BI_Developer_Guidelines.md §5),
+    /// seeded into sales.RolePermissions — the DB is the source of truth, not a static in-code table.
+    /// </summary>
+    private static readonly (string RoleName, string[] PermissionCodes)[] SeedRolePermissions =
+    [
+        (RoleNames.SuperAdmin, [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits, PermissionCodes.AdminView]),
+        (RoleNames.GeneralManager, [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits]),
+        (RoleNames.FinanceManager, [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits]),
+        (RoleNames.CommercialManager, [PermissionCodes.QuotationView]),
+        (RoleNames.CommercialOfficer, [PermissionCodes.QuotationView]),
+        (RoleNames.Merchandiser, [PermissionCodes.QuotationView]),
+        (RoleNames.Viewer, [PermissionCodes.QuotationView]),
+    ];
+
+    /// <summary>
+    /// Dev-only login users — one per seeded role (docs/requirements/Sales_Delivery_Module_BI_Developer_Guidelines.md §5),
+    /// unit assignments matching each role's documented access pattern (all-units vs assigned-units). Fixed dev password,
+    /// same "dev-only, replace once real thing exists" spirit as the dev JWT signing key in appsettings.Development.json.
+    /// </summary>
+    private const string SeedUserPassword = "Passw0rd!1";
+
+    private static readonly (Guid Id, string Email, string DisplayName, string RoleName, string[] UnitNames)[] SeedUsers =
+    [
+        (Guid.Parse("66666666-6666-6666-6666-666666666601"), "admin@salesdeliverybi.dev", "Admin User",
+            RoleNames.SuperAdmin, []),
+        (Guid.Parse("66666666-6666-6666-6666-666666666602"), "mehedi.hasan@salesdeliverybi.dev", "Mehedi Hasan",
+            RoleNames.CommercialManager, ["Unit-1"]),
+        (Guid.Parse("66666666-6666-6666-6666-666666666603"), "jahid.hasan@salesdeliverybi.dev", "Jahid Hasan",
+            RoleNames.Merchandiser, ["Unit-2"]),
+        (Guid.Parse("66666666-6666-6666-6666-666666666604"), "general.manager@salesdeliverybi.dev", "General Manager",
+            RoleNames.GeneralManager, []),
+        (Guid.Parse("66666666-6666-6666-6666-666666666605"), "commercial.officer@salesdeliverybi.dev", "Commercial Officer",
+            RoleNames.CommercialOfficer, ["Unit-1", "Unit-2"]),
+        (Guid.Parse("66666666-6666-6666-6666-666666666606"), "finance.manager@salesdeliverybi.dev", "Finance Manager",
+            RoleNames.FinanceManager, []),
+        (Guid.Parse("66666666-6666-6666-6666-666666666607"), "viewer@salesdeliverybi.dev", "Viewer User",
+            RoleNames.Viewer, ["Unit-3"]),
+    ];
+
     private readonly AppDbContext _context;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly ILogger<DatabaseSeeder> _logger;
 
-    public DatabaseSeeder(AppDbContext context, ILogger<DatabaseSeeder> logger)
+    public DatabaseSeeder(AppDbContext context, IPasswordHasher passwordHasher, ILogger<DatabaseSeeder> logger)
     {
         _context = context;
+        _passwordHasher = passwordHasher;
         _logger = logger;
     }
 
@@ -73,6 +128,9 @@ public class DatabaseSeeder
         Dictionary<string, Unit> units = await SeedUnitsAsync(cancellationToken);
         Dictionary<string, Buyer> buyers = await SeedBuyersAsync(cancellationToken);
         Dictionary<string, Merchandiser> merchandisers = await SeedMerchandisersAsync(units, cancellationToken);
+        Dictionary<string, Role> roles = await SeedRolesAsync(cancellationToken);
+        await SeedRolePermissionsAsync(roles, cancellationToken);
+        await SeedUsersAsync(units, roles, cancellationToken);
 
         List<SeedQuotationRecord> records = LoadSeedRecords();
 
@@ -81,6 +139,83 @@ public class DatabaseSeeder
 
         _logger.LogInformation("Database seeding complete: {UnitCount} units, {BuyerCount} buyers, {QuotationCount} quotations",
             units.Count, buyers.Count, records.Count);
+    }
+
+    private async Task<Dictionary<string, Role>> SeedRolesAsync(CancellationToken cancellationToken)
+    {
+        Dictionary<string, Role> existing = await _context.Roles.ToDictionaryAsync(r => r.Name, cancellationToken);
+
+        foreach ((Guid id, string name) in SeedRoles)
+        {
+            if (existing.ContainsKey(name))
+            {
+                continue;
+            }
+
+            var role = new Role { Id = id, Name = name };
+            _context.Roles.Add(role);
+            existing[name] = role;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return existing;
+    }
+
+    private async Task SeedRolePermissionsAsync(Dictionary<string, Role> roles, CancellationToken cancellationToken)
+    {
+        var existing = (await _context.RolePermissions
+                .Select(rp => new { rp.RoleId, rp.PermissionCode })
+                .ToListAsync(cancellationToken))
+            .Select(rp => (rp.RoleId, rp.PermissionCode))
+            .ToHashSet();
+
+        foreach ((string roleName, string[] permissionCodes) in SeedRolePermissions)
+        {
+            Guid roleId = roles[roleName].Id;
+
+            foreach (string permissionCode in permissionCodes)
+            {
+                if (existing.Contains((roleId, permissionCode)))
+                {
+                    continue;
+                }
+
+                _context.RolePermissions.Add(new RolePermission { RoleId = roleId, PermissionCode = permissionCode });
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedUsersAsync(Dictionary<string, Unit> units, Dictionary<string, Role> roles, CancellationToken cancellationToken)
+    {
+        HashSet<string> existingEmails = (await _context.Users.Select(u => u.Email).ToListAsync(cancellationToken)).ToHashSet();
+
+        foreach ((Guid id, string email, string displayName, string roleName, string[] unitNames) in SeedUsers)
+        {
+            if (existingEmails.Contains(email))
+            {
+                continue;
+            }
+
+            var user = new User
+            {
+                Id = id,
+                Email = email,
+                DisplayName = displayName,
+                PasswordHash = _passwordHasher.Hash(SeedUserPassword),
+                RoleId = roles[roleName].Id,
+            };
+
+            foreach (string unitName in unitNames)
+            {
+                user.UserUnits.Add(new UserUnit { UserId = id, UnitId = units[unitName].Id });
+            }
+
+            _context.Users.Add(user);
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     private async Task<Dictionary<string, Unit>> SeedUnitsAsync(CancellationToken cancellationToken)

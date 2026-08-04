@@ -13,11 +13,18 @@ internal sealed class FakeQuotationRepository : IQuotationRepository
     public Guid? LastQuotationId { get; private set; }
     public int CallCount { get; private set; }
 
+    /// <summary>Defaults to empty — set before calling the AppService to test grid paging/sorting on non-trivial data.</summary>
+    public IReadOnlyList<OpenQuotationDto> OpenQuotations { get; set; } = [];
+
+    public IReadOnlyList<BuyerPerformanceDto> BuyerPerformance { get; set; } = [];
+
+    public IReadOnlyList<AgedQuotationDto> AgedQuotations { get; set; } = [];
+
     public Task<DashboardResponse<QuotationPipelineDto>> GetPipelineSummaryAsync(UnitScope scope, CancellationToken cancellationToken)
     {
         LastScope = scope;
         CallCount++;
-        var dto = new QuotationPipelineDto(new PipelineKpisDto(0, 0m, 0, 0d), [], []);
+        var dto = new QuotationPipelineDto(new PipelineKpisDto(0, 0m, 0, 0d), [], OpenQuotations);
         return Task.FromResult(new DashboardResponse<QuotationPipelineDto>(dto, DateTime.UtcNow));
     }
 
@@ -28,7 +35,7 @@ internal sealed class FakeQuotationRepository : IQuotationRepository
         LastFromDate = fromDate;
         LastToDate = toDate;
         CallCount++;
-        var dto = new ConversionDto(new ConversionKpisDto(0m, 0m, 0m, 0d), [], []);
+        var dto = new ConversionDto(new ConversionKpisDto(0m, 0m, 0m, 0d), [], BuyerPerformance);
         return Task.FromResult(new DashboardResponse<ConversionDto>(dto, DateTime.UtcNow));
     }
 
@@ -36,7 +43,7 @@ internal sealed class FakeQuotationRepository : IQuotationRepository
     {
         LastScope = scope;
         CallCount++;
-        var dto = new AgingDto(new AgingKpisDto(0m, 0m), [], []);
+        var dto = new AgingDto(new AgingKpisDto(0m, 0m), [], AgedQuotations);
         return Task.FromResult(new DashboardResponse<AgingDto>(dto, DateTime.UtcNow));
     }
 

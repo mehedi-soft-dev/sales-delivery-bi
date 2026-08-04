@@ -1,0 +1,55 @@
+<div class="conversion-page">
+  <app-page-header title="Conversion & Win/Loss" subtitle="Win-rate performance by buyer, over the selected date range" icon="percentage">
+    <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
+  </app-page-header>
+
+  <app-date-range-filter (filterChange)="onDateRangeChange($event)" />
+
+  @if (service.loading() && !service.data()) {
+    <app-loading-skeleton [kpiCount]="4" [contentBlockHeights]="[280, 280, 320]" />
+  } @else if (service.error()) {
+    <div class="dashboard-state dashboard-state--error" role="alert">
+      Something went wrong loading the conversion dashboard. Please try again.
+    </div>
+  } @else if (service.data(); as conversion) {
+    <div class="dashboard-kpis">
+      <app-kpi-card
+        label="Conversion Rate"
+        [value]="conversion.kpis.conversionRatePct | ratePercent"
+        icon="percentage"
+        accent="blue"
+      />
+      <app-kpi-card label="Won Value" [value]="conversion.kpis.wonValueUsd | currencyUsd" icon="check-circle" accent="green" />
+      <app-kpi-card label="Lost Value" [value]="conversion.kpis.lostValueUsd | currencyUsd" icon="times-circle" accent="red" />
+      <app-kpi-card
+        label="Avg. Conversion Time"
+        [value]="conversion.kpis.avgConversionDays | daysOpen"
+        icon="calendar-clock"
+        accent="amber"
+      />
+    </div>
+
+    <div class="dashboard-charts">
+      <div class="dashboard-card">
+        <h2>Conversion Rate Trend</h2>
+        <app-conversion-trend-chart [trend]="conversion.monthlyTrend" />
+      </div>
+      <div class="dashboard-card">
+        <h2>Won vs Lost Value</h2>
+        <app-win-loss-chart [wonValueUsd]="conversion.kpis.wonValueUsd" [lostValueUsd]="conversion.kpis.lostValueUsd" />
+      </div>
+    </div>
+
+    <div class="dashboard-card__header">
+      <h2>Buyer Performance</h2>
+      <span class="dashboard-card__count-badge">{{ conversion.buyerPerformance.totalCount }} Records</span>
+    </div>
+    <div class="dashboard-card dashboard-card--table">
+      <app-buyer-performance-grid
+        [page]="conversion.buyerPerformance"
+        [loading]="service.loading()"
+        (lazyLoad)="onLazyLoad($event)"
+      />
+    </div>
+  }
+</div>

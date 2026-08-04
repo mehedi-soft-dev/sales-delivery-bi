@@ -1,0 +1,11 @@
+<div class="loading-skeleton" aria-busy="true" aria-label="Loading">
+  <div class="loading-skeleton__kpi-row">
+    @for (_ of kpiPlaceholders(); track $index) {
+      <p-skeleton height="88px" borderRadius="var(--p-content-border-radius)" class="loading-skeleton__kpi" />
+    }
+  </div>
+
+  @for (height of contentBlockHeights(); track $index) {
+    <p-skeleton [height]="height + 'px'" borderRadius="var(--p-content-border-radius)" />
+  }
+</div>

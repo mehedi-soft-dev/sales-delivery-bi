@@ -1,0 +1,24 @@
+<div class="date-range-filter">
+  <p-datepicker
+    [(ngModel)]="fromDate"
+    (ngModelChange)="onFilterFieldChange()"
+    [maxDate]="toDate ?? undefined"
+    dateFormat="yy-mm-dd"
+    placeholder="From date"
+    [showIcon]="true"
+    [showClear]="true"
+    ariaLabel="From date"
+    class="date-range-filter__date"
+  />
+  <p-datepicker
+    [(ngModel)]="toDate"
+    (ngModelChange)="onFilterFieldChange()"
+    [minDate]="fromDate ?? undefined"
+    dateFormat="yy-mm-dd"
+    placeholder="To date"
+    [showIcon]="true"
+    [showClear]="true"
+    ariaLabel="To date"
+    class="date-range-filter__date"
+  />
+</div>

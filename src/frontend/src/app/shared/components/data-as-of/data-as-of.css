@@ -1,0 +1,28 @@
+.data-as-of {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.5rem 0.3125rem 0.75rem;
+  border-radius: 999px;
+  background: var(--p-surface-100);
+  color: var(--p-text-muted-color);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.data-as-of__refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--p-text-muted-color);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 999px;
+}
+
+.data-as-of__refresh:hover {
+  background: var(--p-content-hover-background);
+  color: var(--p-text-color);
+}

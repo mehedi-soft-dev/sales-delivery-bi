@@ -1,0 +1,44 @@
+<p-table
+  class="aging-grid"
+  [value]="page().items"
+  [lazy]="true"
+  (onLazyLoad)="lazyLoad.emit($event)"
+  [paginator]="true"
+  [rows]="page().pageSize"
+  [first]="(page().page - 1) * page().pageSize"
+  [totalRecords]="page().totalCount"
+  [loading]="loading()"
+  [rowsPerPageOptions]="[10, 20, 50]"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} results"
+  dataKey="quotationId"
+  responsiveLayout="scroll"
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="quotationNo">Quotation No. <p-sortIcon field="quotationNo" /></th>
+      <th pSortableColumn="buyerName">Buyer <p-sortIcon field="buyerName" /></th>
+      <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+      <th pSortableColumn="riskLevel" class="aging-grid__col--low-priority">Risk Level <p-sortIcon field="riskLevel" /></th>
+      <th pSortableColumn="daysOpen" class="aging-grid__col--right">Days Open <p-sortIcon field="daysOpen" /></th>
+      <th pSortableColumn="valueUsd" class="aging-grid__col--right">Value (USD) <p-sortIcon field="valueUsd" /></th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-row>
+    <tr>
+      <td>{{ row.quotationNo }}</td>
+      <td>{{ row.buyerName }}</td>
+      <td><app-status-badge [status]="row.status" /></td>
+      <td class="aging-grid__col--low-priority">{{ row.riskLevel }}</td>
+      <td class="aging-grid__col--right">{{ row.daysOpen | daysOpen }}</td>
+      <td class="aging-grid__col--right">{{ row.valueUsd | currencyUsd }}</td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="6" class="aging-grid__empty">No aged quotations match this filter.</td>
+    </tr>
+  </ng-template>
+</p-table>

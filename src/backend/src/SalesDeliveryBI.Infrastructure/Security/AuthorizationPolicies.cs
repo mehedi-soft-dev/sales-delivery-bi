@@ -10,6 +10,7 @@ public static class AuthorizationPolicies
 {
     public const string QuotationRead = "QuotationRead";
     public const string QuotationReadAllUnits = "QuotationReadAllUnits";
+    public const string AdminRead = "AdminRead";
 
     /// <summary>
     /// Claim type carrying permission codes in the JWT. security-plan.md's own §2 (claim contract) and §3
@@ -18,7 +19,7 @@ public static class AuthorizationPolicies
     /// </summary>
     private const string PermissionClaimType = "permissions";
 
-    public static IServiceCollection AddQuotationAuthorizationPolicies(this IServiceCollection services)
+    public static IServiceCollection AddAuthorizationPolicies(this IServiceCollection services)
     {
         services.AddAuthorization(options =>
         {
@@ -27,6 +28,9 @@ public static class AuthorizationPolicies
 
             options.AddPolicy(QuotationReadAllUnits, policy =>
                 policy.RequireClaim(PermissionClaimType, PermissionCodes.QuotationViewAllUnits));
+
+            options.AddPolicy(AdminRead, policy =>
+                policy.RequireClaim(PermissionClaimType, PermissionCodes.AdminView));
         });
 
         return services;

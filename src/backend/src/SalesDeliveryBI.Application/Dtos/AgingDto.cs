@@ -1,9 +1,18 @@
+using SalesDeliveryBI.Application.Common;
+
 namespace SalesDeliveryBI.Application.Dtos;
 
+/// <summary>Repository/cache-internal shape — AgedQuotations is the FULL unpaged list, exactly what's cached under CacheKeys.Aging.</summary>
 public sealed record AgingDto(
     AgingKpisDto Kpis,
     IReadOnlyList<AgingBucketDto> AgingBuckets,
     IReadOnlyList<AgedQuotationDto> AgedQuotations);
+
+/// <summary>What the API actually returns — AgedQuotations is the server-side-paged slice, sliced from the cached full list in QuotationAppService.</summary>
+public sealed record AgingResponseDto(
+    AgingKpisDto Kpis,
+    IReadOnlyList<AgingBucketDto> AgingBuckets,
+    PagedResult<AgedQuotationDto> AgedQuotations);
 
 public sealed record AgingKpisDto(decimal TotalOpenValueUsd, decimal HighRiskAgedValueUsd);
 

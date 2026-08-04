@@ -8,6 +8,8 @@ export class CurrentUserService {
   private readonly claims = signal<JwtClaims | null>(this.readStoredClaims());
 
   readonly sub = computed(() => this.claims()?.sub ?? null);
+  readonly name = computed(() => this.claims()?.name ?? null);
+  readonly role = computed(() => this.claims()?.role ?? null);
   readonly permissions = computed(() => this.claims()?.permissions ?? []);
   readonly userUnits = computed(() => this.claims()?.user_units ?? []);
 

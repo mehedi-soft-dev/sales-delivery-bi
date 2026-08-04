@@ -21,10 +21,11 @@ describe('authGuard', () => {
     expect(result).toBe(true);
   });
 
-  it('redirects to /403 when not authenticated', () => {
-    const result = TestBed.runInInjectionContext(() => authGuard({} as never, {} as never));
+  it('redirects to /login with a returnUrl when not authenticated', () => {
+    const state = { url: '/pipeline' } as never;
+    const result = TestBed.runInInjectionContext(() => authGuard({} as never, state));
 
     expect(result).toBeInstanceOf(UrlTree);
-    expect((result as UrlTree).toString()).toBe('/403');
+    expect((result as UrlTree).toString()).toBe('/login?returnUrl=%2Fpipeline');
   });
 });

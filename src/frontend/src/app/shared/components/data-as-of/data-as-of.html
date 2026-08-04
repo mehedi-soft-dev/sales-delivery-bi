@@ -1,0 +1,11 @@
+<span class="data-as-of">
+  <svg data-p-icon="history" size="13"></svg>
+  @if (lastRefresh()) {
+    Data as of {{ lastRefresh() | date: 'medium' }}
+  } @else {
+    Data as of —
+  }
+  <button type="button" class="data-as-of__refresh" (click)="refresh.emit()" aria-label="Refresh data">
+    <svg data-p-icon="refresh" size="12"></svg>
+  </button>
+</span>

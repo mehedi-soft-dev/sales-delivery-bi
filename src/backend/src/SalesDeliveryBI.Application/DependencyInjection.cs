@@ -12,6 +12,8 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<QuotationAppService>();
+        services.AddScoped<AuthAppService>();
+        services.AddScoped<AdminAppService>();
 
         return services;
     }

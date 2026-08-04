@@ -1,0 +1,52 @@
+<p-table
+  class="buyer-performance-grid"
+  [value]="page().items"
+  [lazy]="true"
+  (onLazyLoad)="lazyLoad.emit($event)"
+  [paginator]="true"
+  [rows]="page().pageSize"
+  [first]="(page().page - 1) * page().pageSize"
+  [totalRecords]="page().totalCount"
+  [loading]="loading()"
+  [rowsPerPageOptions]="[10, 20, 50]"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} results"
+  dataKey="buyerName"
+  responsiveLayout="scroll"
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="buyerName">Buyer <p-sortIcon field="buyerName" /></th>
+      <th pSortableColumn="quotationsCount" class="buyer-performance-grid__col--right buyer-performance-grid__col--low-priority">
+        Quotations <p-sortIcon field="quotationsCount" />
+      </th>
+      <th pSortableColumn="wonCount" class="buyer-performance-grid__col--right buyer-performance-grid__col--low-priority">
+        Won <p-sortIcon field="wonCount" />
+      </th>
+      <th pSortableColumn="lostCount" class="buyer-performance-grid__col--right buyer-performance-grid__col--low-priority">
+        Lost <p-sortIcon field="lostCount" />
+      </th>
+      <th pSortableColumn="conversionRatePct" class="buyer-performance-grid__col--right">
+        Conversion Rate <p-sortIcon field="conversionRatePct" />
+      </th>
+      <th pSortableColumn="valueUsd" class="buyer-performance-grid__col--right">Value (USD) <p-sortIcon field="valueUsd" /></th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-row>
+    <tr>
+      <td>{{ row.buyerName }}</td>
+      <td class="buyer-performance-grid__col--right buyer-performance-grid__col--low-priority">{{ row.quotationsCount }}</td>
+      <td class="buyer-performance-grid__col--right buyer-performance-grid__col--low-priority">{{ row.wonCount }}</td>
+      <td class="buyer-performance-grid__col--right buyer-performance-grid__col--low-priority">{{ row.lostCount }}</td>
+      <td class="buyer-performance-grid__col--right">{{ row.conversionRatePct | ratePercent }}</td>
+      <td class="buyer-performance-grid__col--right">{{ row.valueUsd | currencyUsd }}</td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="6" class="buyer-performance-grid__empty">No buyer performance data matches this filter.</td>
+    </tr>
+  </ng-template>
+</p-table>

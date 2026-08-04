@@ -1,0 +1,56 @@
+<article class="kpi-card">
+  <div class="kpi-card__heading">
+    @if (icon()) {
+      <span class="kpi-card__icon kpi-card__icon--{{ accent() }}">
+        @switch (icon()) {
+          @case ('file') {
+            <svg data-p-icon="file" size="15"></svg>
+          }
+          @case ('wallet') {
+            <svg data-p-icon="wallet" size="15"></svg>
+          }
+          @case ('hourglass') {
+            <svg data-p-icon="hourglass" size="15"></svg>
+          }
+          @case ('calendar-clock') {
+            <svg data-p-icon="calendar-clock" size="15"></svg>
+          }
+          @case ('percentage') {
+            <svg data-p-icon="percentage" size="15"></svg>
+          }
+          @case ('check-circle') {
+            <svg data-p-icon="check-circle" size="15"></svg>
+          }
+          @case ('times-circle') {
+            <svg data-p-icon="times-circle" size="15"></svg>
+          }
+          @case ('exclamation-triangle') {
+            <svg data-p-icon="exclamation-triangle" size="15"></svg>
+          }
+        }
+      </span>
+    }
+    <span class="kpi-card__label">{{ label() }}</span>
+  </div>
+
+  <div class="kpi-card__foot">
+    <span class="kpi-card__value">{{ value() }}</span>
+
+    @if (trend()) {
+      <span class="kpi-card__trend kpi-card__trend--{{ trend()!.sentiment }}">
+        @switch (trend()!.direction) {
+          @case ('up') {
+            <svg data-p-icon="arrow-up" size="12"></svg>
+          }
+          @case ('down') {
+            <svg data-p-icon="arrow-down" size="12"></svg>
+          }
+          @default {
+            <svg data-p-icon="minus" size="12"></svg>
+          }
+        }
+        {{ trend()!.label }}
+      </span>
+    }
+  </div>
+</article>

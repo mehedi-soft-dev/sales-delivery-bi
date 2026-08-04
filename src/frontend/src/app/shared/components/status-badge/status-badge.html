@@ -1,0 +1,32 @@
+<span class="status-badge" [style.--status-color]="color()">
+  @switch (status()) {
+    @case ('Draft') {
+      <svg data-p-icon="pencil" size="12" class="status-badge__icon"></svg>
+    }
+    @case ('Submitted') {
+      <svg data-p-icon="send" size="12" class="status-badge__icon"></svg>
+    }
+    @case ('Negotiation') {
+      <svg data-p-icon="comments" size="12" class="status-badge__icon"></svg>
+    }
+    @case ('PendingApproval') {
+      <svg data-p-icon="hourglass" size="12" class="status-badge__icon"></svg>
+    }
+    @case ('Approved') {
+      <svg data-p-icon="check" size="12" class="status-badge__icon"></svg>
+    }
+    @case ('Converted') {
+      <svg data-p-icon="check-circle" size="12" class="status-badge__icon"></svg>
+    }
+    @case ('Rejected') {
+      <svg data-p-icon="times-circle" size="12" class="status-badge__icon"></svg>
+    }
+    @case ('Expired') {
+      <svg data-p-icon="calendar-times" size="12" class="status-badge__icon"></svg>
+    }
+    @default {
+      <svg data-p-icon="circle" size="12" class="status-badge__icon"></svg>
+    }
+  }
+  <span class="status-badge__label">{{ status() }}</span>
+</span>

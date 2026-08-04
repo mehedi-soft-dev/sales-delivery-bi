@@ -26,12 +26,14 @@ public class CacheWarmupJob : IJob
     private readonly IQuotationRepository _repository;
     private readonly ICacheService _cache;
     private readonly ILogger<CacheWarmupJob> _logger;
+    private readonly CacheTtlOptions _cacheTtls;
 
-    public CacheWarmupJob(IQuotationRepository repository, ICacheService cache, ILogger<CacheWarmupJob> logger)
+    public CacheWarmupJob(IQuotationRepository repository, ICacheService cache, ILogger<CacheWarmupJob> logger, CacheTtlOptions cacheTtls)
     {
         _repository = repository;
         _cache = cache;
         _logger = logger;
+        _cacheTtls = cacheTtls;
     }
 
     public Task Execute(IJobExecutionContext context)
@@ -74,13 +76,13 @@ public class CacheWarmupJob : IJob
 #pragma warning disable CA1859
     private Task WarmPipelineAsync(CancellationToken cancellationToken) => _cache.GetOrSetAsync(
         CacheKeys.Pipeline(UnrestrictedScope),
-        DashboardCacheTtls.Pipeline,
+        _cacheTtls.Pipeline,
         ct => _repository.GetPipelineSummaryAsync(UnrestrictedScope, ct),
         cancellationToken);
 
     private Task WarmAgingAsync(CancellationToken cancellationToken) => _cache.GetOrSetAsync(
         CacheKeys.Aging(UnrestrictedScope),
-        DashboardCacheTtls.Aging,
+        _cacheTtls.Aging,
         ct => _repository.GetAgingSummaryAsync(UnrestrictedScope, ct),
         cancellationToken);
 
@@ -91,7 +93,7 @@ public class CacheWarmupJob : IJob
 
         return _cache.GetOrSetAsync(
             CacheKeys.Conversion(UnrestrictedScope, monthStart, today),
-            DashboardCacheTtls.Conversion,
+            _cacheTtls.Conversion,
             ct => _repository.GetConversionSummaryAsync(UnrestrictedScope, monthStart, today, ct),
             cancellationToken);
     }

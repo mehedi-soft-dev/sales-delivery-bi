@@ -1,0 +1,53 @@
+<div class="users-page">
+  <app-page-header title="Users" subtitle="Every seeded account and its assigned role/units — view only." icon="users" />
+
+  @if (service.error()) {
+    <div class="dashboard-state dashboard-state--error" role="alert">Something went wrong loading users. Please try again.</div>
+  } @else {
+    <div class="dashboard-card dashboard-card--table">
+      <p-table
+        [value]="service.page()?.items ?? []"
+        [lazy]="true"
+        (onLazyLoad)="onLazyLoad($event)"
+        [paginator]="true"
+        [rows]="service.page()?.pageSize ?? 10"
+        [first]="((service.page()?.page ?? 1) - 1) * (service.page()?.pageSize ?? 10)"
+        [totalRecords]="service.page()?.totalCount ?? 0"
+        [loading]="service.loading()"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} results"
+        dataKey="userId"
+        responsiveLayout="scroll"
+      >
+        <ng-template #header>
+          <tr>
+            <th pSortableColumn="displayName">Name <p-sortIcon field="displayName" /></th>
+            <th pSortableColumn="email">Email <p-sortIcon field="email" /></th>
+            <th pSortableColumn="roleName">Role <p-sortIcon field="roleName" /></th>
+            <th>Units</th>
+            <th pSortableColumn="isActive">Status <p-sortIcon field="isActive" /></th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-row>
+          <tr>
+            <td>{{ row.displayName }}</td>
+            <td>{{ row.email }}</td>
+            <td>{{ row.roleName }}</td>
+            <td>{{ row.unitNames.length ? row.unitNames.join(', ') : 'All Units' }}</td>
+            <td>
+              <span class="users-page__status" [class.users-page__status--active]="row.isActive">
+                {{ row.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="5" class="users-page__empty">No users found.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+</div>

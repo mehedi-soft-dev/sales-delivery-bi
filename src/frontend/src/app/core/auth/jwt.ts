@@ -1,5 +1,8 @@
 export interface JwtClaims {
   sub: string;
+  name?: string;
+  /** Display-only — never used for access-control decisions here, that's `permissions`. */
+  role?: string;
   permissions?: string[];
   user_units?: string[];
   exp?: number;

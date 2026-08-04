@@ -1,0 +1,49 @@
+<div class="permissions-page">
+  <app-page-header
+    title="Permissions"
+    subtitle="Every permission code in use, and which roles grant it — view only."
+    icon="key"
+  />
+
+  @if (service.error()) {
+    <div class="dashboard-state dashboard-state--error" role="alert">
+      Something went wrong loading permissions. Please try again.
+    </div>
+  } @else {
+    <div class="dashboard-card dashboard-card--table">
+      <p-table
+        [value]="service.page()?.items ?? []"
+        [lazy]="true"
+        (onLazyLoad)="onLazyLoad($event)"
+        [paginator]="true"
+        [rows]="service.page()?.pageSize ?? 10"
+        [first]="((service.page()?.page ?? 1) - 1) * (service.page()?.pageSize ?? 10)"
+        [totalRecords]="service.page()?.totalCount ?? 0"
+        [loading]="service.loading()"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} results"
+        dataKey="permissionCode"
+        responsiveLayout="scroll"
+      >
+        <ng-template #header>
+          <tr>
+            <th pSortableColumn="permissionCode">Permission Code <p-sortIcon field="permissionCode" /></th>
+            <th>Granted To</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-row>
+          <tr>
+            <td><span class="permissions-page__code">{{ row.permissionCode }}</span></td>
+            <td>{{ row.roleNames.join(', ') }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="2" class="permissions-page__empty">No permissions found.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+</div>

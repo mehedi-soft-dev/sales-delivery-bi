@@ -1,0 +1,100 @@
+<ng-template #iconTpl let-name>
+  @switch (name) {
+    @case ('home') {
+      <svg data-p-icon="home" size="18"></svg>
+    }
+    @case ('folder') {
+      <svg data-p-icon="folder" size="16"></svg>
+    }
+    @case ('chart-line') {
+      <svg data-p-icon="chart-line" size="16"></svg>
+    }
+    @case ('percentage') {
+      <svg data-p-icon="percentage" size="16"></svg>
+    }
+    @case ('clock') {
+      <svg data-p-icon="clock" size="16"></svg>
+    }
+    @case ('shopping-cart') {
+      <svg data-p-icon="shopping-cart" size="16"></svg>
+    }
+    @case ('truck') {
+      <svg data-p-icon="truck" size="16"></svg>
+    }
+    @case ('receipt') {
+      <svg data-p-icon="receipt" size="16"></svg>
+    }
+    @case ('reply') {
+      <svg data-p-icon="reply" size="16"></svg>
+    }
+    @case ('chart-pie') {
+      <svg data-p-icon="chart-pie" size="18"></svg>
+    }
+    @case ('shield') {
+      <svg data-p-icon="shield" size="18"></svg>
+    }
+    @case ('users') {
+      <svg data-p-icon="users" size="16"></svg>
+    }
+    @case ('sitemap') {
+      <svg data-p-icon="sitemap" size="16"></svg>
+    }
+    @case ('key') {
+      <svg data-p-icon="key" size="16"></svg>
+    }
+  }
+</ng-template>
+
+@if (node(); as n) {
+  @if (n.kind === 'leaf') {
+    <a
+      [routerLink]="n.path"
+      routerLinkActive="nav-node__link--active"
+      class="nav-node__link"
+      [class.nav-node__link--collapsed]="isCollapsed()"
+      [style.padding-left.rem]="isCollapsed() ? null : 0.75 + depth() * 1.125"
+      [pTooltip]="isCollapsed() ? n.label : undefined"
+      tooltipPosition="right"
+      (click)="onChildLeafClick()"
+    >
+      <span class="nav-node__icon">
+        <ng-container [ngTemplateOutlet]="iconTpl" [ngTemplateOutletContext]="{ $implicit: n.iconName }" />
+      </span>
+      <span class="nav-node__label">{{ n.label }}</span>
+    </a>
+  } @else {
+    <button
+      type="button"
+      class="nav-node__group-btn"
+      [class.nav-node__group-btn--collapsed]="isCollapsed()"
+      [style.padding-left.rem]="isCollapsed() ? null : 0.75 + depth() * 1.125"
+      (click)="toggle()"
+      [attr.aria-expanded]="expanded() && !isCollapsed()"
+      [pTooltip]="isCollapsed() ? n.label : undefined"
+      tooltipPosition="right"
+    >
+      <span class="nav-node__icon">
+        <ng-container [ngTemplateOutlet]="iconTpl" [ngTemplateOutletContext]="{ $implicit: n.iconName }" />
+      </span>
+      <span class="nav-node__label">{{ n.label }}</span>
+      <svg
+        data-p-icon="chevron-down"
+        size="12"
+        class="nav-node__chevron"
+        [class.nav-node__chevron--collapsed]="!expanded()"
+      ></svg>
+    </button>
+
+    @if (expanded() && !isCollapsed()) {
+      @for (child of n.children; track child.label) {
+        <app-nav-node
+          [node]="child"
+          [depth]="depth() + 1"
+          [isCollapsed]="isCollapsed()"
+          (leafClick)="onChildLeafClick()"
+          (expandRequest)="onChildExpandRequest()"
+        />
+      }
+    }
+  }
+}

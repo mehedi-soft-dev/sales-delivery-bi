@@ -11,6 +11,8 @@
     'sidebar content'
     'footer footer';
   min-height: 100vh;
+  background: var(--p-surface-100);
+  transition: grid-template-columns 0.15s ease;
 }
 
 .shell > app-topbar {
@@ -23,9 +25,7 @@
 .shell__content {
   grid-area: content;
   padding: 1.5rem;
-  max-width: 1440px;
   width: 100%;
-  margin-inline: auto;
   overflow-x: hidden;
 }
 
@@ -50,9 +50,15 @@
   }
 }
 
+@media (min-width: 1024px) {
+  .shell--sidebar-collapsed {
+    --sidebar-width: 72px;
+  }
+}
+
 @media (min-width: 768px) and (max-width: 1023px) {
   .shell {
-    --sidebar-width: 64px;
+    --sidebar-width: 72px;
   }
 }
 

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SalesDeliveryBI.Application.Abstractions;
+using SalesDeliveryBI.Application.Common;
 using SalesDeliveryBI.Infrastructure.Caching;
 using SalesDeliveryBI.Infrastructure.Jobs;
 using SalesDeliveryBI.Infrastructure.Persistence.Dapper;
@@ -19,9 +20,11 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserContext, CurrentUserContext>();
         services.AddScoped<IUnitAccessGuard, UnitAccessGuard>();
-        services.AddQuotationAuthorizationPolicies();
+        services.AddAuthorizationPolicies();
 
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
+
+        services.AddSingleton(configuration.GetSection("CacheTtls").Get<CacheTtlOptions>() ?? new CacheTtlOptions());
 
         services.AddDbContext<AppDbContext>((provider, options) =>
         {
@@ -33,6 +36,11 @@ public static class DependencyInjection
         });
 
         services.AddScoped<DatabaseSeeder>();
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IAdminRepository, AdminRepository>();
 
         services.AddSingleton<DapperContext>();
         services.AddScoped<IQuotationRepository, QuotationRepository>();

@@ -1,10 +1,21 @@
-<div class="shell">
+<div class="shell" [class.shell--sidebar-collapsed]="sidebarCollapsed()">
   @if (loadingIndicator.isLoading()) {
     <div class="shell__loading-bar" aria-hidden="true"></div>
   }
 
-  <app-topbar (menuToggle)="sidebarOpen.set(!sidebarOpen())" />
-  <app-sidebar [(mobileOpen)]="sidebarOpen" />
+  <app-topbar
+    [userDisplayName]="currentUser.name()"
+    [userRole]="currentUser.role()"
+    [sidebarCollapsed]="sidebarCollapsed()"
+    (menuToggle)="sidebarOpen.set(!sidebarOpen())"
+    (collapseToggle)="sidebarCollapsed.set(!sidebarCollapsed())"
+    (logout)="onLogout()"
+  />
+  <app-sidebar
+    [(mobileOpen)]="sidebarOpen"
+    [collapsed]="sidebarCollapsed()"
+    (expandRequest)="sidebarCollapsed.set(false)"
+  />
 
   <main class="shell__content">
     <router-outlet />

@@ -1,0 +1,17 @@
+.permissions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.permissions-page__code {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 0.8125rem;
+  color: var(--p-text-color);
+}
+
+.permissions-page__empty {
+  text-align: center;
+  color: var(--p-text-muted-color);
+  padding: 1.5rem;
+}

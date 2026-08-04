@@ -1,1 +1,114 @@
-/* You can add global styles to this file, and also import other style files */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
+html,
+body {
+  height: 100%;
+}
+
+:root {
+  /* Forces PrimeNG's `light-dark()` token values to the light branch, regardless of OS/browser dark-mode preference. */
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--p-surface-100);
+  color: var(--p-text-color);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* KPI row — CSS Grid (not flex) so cards always fill the full row width evenly, however many there are. */
+.dashboard-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* Chart row — two (or more) chart cards side by side, wrapping to a single column on narrow viewports. */
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+/* Shared dashboard surface — used by every feature page for chart cards and error/empty states,
+   so the three dashboards (pipeline, conversion, aging) stay visually identical without duplicating this CSS per page. */
+.dashboard-card {
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--p-content-border-color);
+  background: var(--p-content-background);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+.dashboard-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Table-only card: the title+count sit in a separate `.dashboard-card__header` row above the card
+   (never inside it), so the table can go flush to the card edges with no double padding. */
+.dashboard-card--table {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Grid-card header row: title + a live record-count badge (never a fixed/fake number). */
+.dashboard-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.875rem;
+}
+
+.dashboard-card__header h2 {
+  margin: 0;
+}
+
+.dashboard-card__count-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--p-surface-100);
+  color: var(--p-text-muted-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dashboard-state {
+  padding: 2rem 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--p-content-border-color);
+  background: var(--p-content-background);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+  color: var(--p-text-muted-color);
+  text-align: center;
+}
+
+.dashboard-state--error {
+  color: #d03b3b;
+  border-color: #d03b3b;
+}
+
+/* PrimeNG's Aura theme has no font-size token for p-table (only padding varies by size) — it inherits the
+   16px root default, which reads oversized next to the rest of the app's 13-14px data-density text. Applied
+   globally so every grid (dashboards + Admin) stays visually consistent without per-component overrides. */
+.p-datatable-thead > tr > th,
+.p-datatable-tbody > tr > td,
+.p-datatable-tfoot > tr > td {
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.p-datatable-thead > tr > th {
+  font-weight: 600;
+}
+
+.p-datatable-paginator-bottom,
+.p-datatable-paginator-top {
+  font-size: 0.8125rem;
+}

@@ -1,0 +1,62 @@
+<div class="page-header">
+  <div class="page-header__title">
+    @if (icon()) {
+      <span class="page-header__icon">
+        @switch (icon()) {
+          @case ('home') {
+            <svg data-p-icon="home" size="18"></svg>
+          }
+          @case ('folder') {
+            <svg data-p-icon="folder" size="18"></svg>
+          }
+          @case ('chart-line') {
+            <svg data-p-icon="chart-line" size="18"></svg>
+          }
+          @case ('percentage') {
+            <svg data-p-icon="percentage" size="18"></svg>
+          }
+          @case ('clock') {
+            <svg data-p-icon="clock" size="18"></svg>
+          }
+          @case ('shopping-cart') {
+            <svg data-p-icon="shopping-cart" size="18"></svg>
+          }
+          @case ('truck') {
+            <svg data-p-icon="truck" size="18"></svg>
+          }
+          @case ('receipt') {
+            <svg data-p-icon="receipt" size="18"></svg>
+          }
+          @case ('reply') {
+            <svg data-p-icon="reply" size="18"></svg>
+          }
+          @case ('chart-pie') {
+            <svg data-p-icon="chart-pie" size="18"></svg>
+          }
+          @case ('shield') {
+            <svg data-p-icon="shield" size="18"></svg>
+          }
+          @case ('users') {
+            <svg data-p-icon="users" size="18"></svg>
+          }
+          @case ('sitemap') {
+            <svg data-p-icon="sitemap" size="18"></svg>
+          }
+          @case ('key') {
+            <svg data-p-icon="key" size="18"></svg>
+          }
+        }
+      </span>
+    }
+    <div class="page-header__text">
+      <h1>{{ title() }}</h1>
+      @if (subtitle()) {
+        <p class="page-header__subtitle">{{ subtitle() }}</p>
+      }
+    </div>
+  </div>
+
+  <div class="page-header__actions">
+    <ng-content />
+  </div>
+</div>

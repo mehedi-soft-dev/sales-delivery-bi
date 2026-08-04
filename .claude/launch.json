@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start", "--prefix", "src/frontend"],
+      "port": 4200
+    },
+    {
+      "name": "backend-dev",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/backend/src/SalesDeliveryBI.Api", "--launch-profile", "https"],
+      "port": 7041,
+      "url": "https://localhost:7041"
+    }
+  ]
+}
