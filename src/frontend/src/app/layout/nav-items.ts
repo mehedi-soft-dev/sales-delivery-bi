@@ -55,6 +55,9 @@ export const NAV_TREE: readonly NavNode[] = [
         ],
       },
       { kind: 'leaf', label: 'Sales Orders', iconName: 'shopping-cart', path: '/dashboard/sales-orders' },
+      { kind: 'leaf', label: 'Delivery / Challan', iconName: 'truck', path: '/dashboard/delivery' },
+      { kind: 'leaf', label: 'Sales Invoice', iconName: 'receipt', path: '/dashboard/invoice' },
+      { kind: 'leaf', label: 'Return / Credit Note', iconName: 'reply', path: '/dashboard/return' },
     ],
   },
   {

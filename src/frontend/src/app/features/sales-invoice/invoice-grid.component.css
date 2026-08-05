@@ -1,0 +1,29 @@
+.invoice-grid {
+  display: block;
+  width: 100%;
+}
+
+:host ::ng-deep .invoice-grid .p-datatable-table-container {
+  overflow-x: auto;
+}
+
+.invoice-grid__col--right {
+  text-align: right;
+}
+
+.invoice-grid__empty {
+  text-align: center;
+  color: var(--p-text-muted-color);
+  padding: 1.5rem;
+}
+
+:host ::ng-deep .invoice-grid .invoice-grid__row--overdue > td {
+  background-color: #fef2f2;
+  border-left: 3px solid #d03b3b;
+}
+
+@media (max-width: 767px) {
+  :host ::ng-deep .invoice-grid .invoice-grid__col--low-priority {
+    display: none;
+  }
+}

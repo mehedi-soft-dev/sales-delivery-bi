@@ -1,7 +1,7 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 import { providePrimeNG } from 'primeng/config';
@@ -34,7 +34,13 @@ const AppTheme = definePreset(Aura, {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    provideRouter(
+      routes,
+      // Without this, Angular's Router leaves window scroll position untouched across navigation — a
+      // scrolled-down dashboard's position carries straight into whatever page you navigate to next,
+      // since the page swap inside <router-outlet> never touches window.scrollY on its own.
+      withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
+    ),
     provideHttpClient(withInterceptors([loadingIndicatorInterceptor, errorInterceptor, authInterceptor])),
     provideAnimationsAsync(),
     providePrimeNG({

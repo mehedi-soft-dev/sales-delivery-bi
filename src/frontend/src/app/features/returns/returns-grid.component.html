@@ -1,0 +1,48 @@
+<p-table
+  class="returns-grid"
+  [value]="page().items"
+  [lazy]="true"
+  (onLazyLoad)="lazyLoad.emit($event)"
+  [paginator]="true"
+  [rows]="page().pageSize"
+  [first]="(page().page - 1) * page().pageSize"
+  [totalRecords]="page().totalCount"
+  [loading]="loading()"
+  [sortField]="sortField()"
+  [sortOrder]="sortOrder()"
+  [rowsPerPageOptions]="[10, 20, 50]"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} results"
+  dataKey="returnId"
+  responsiveLayout="scroll"
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="returnNo">Credit Note No. <p-sortIcon field="returnNo" /></th>
+      <th pSortableColumn="buyerName">Buyer <p-sortIcon field="buyerName" /></th>
+      <th pSortableColumn="unitName" class="returns-grid__col--low-priority">Unit <p-sortIcon field="unitName" /></th>
+      <th pSortableColumn="reasonCode">Reason <p-sortIcon field="reasonCode" /></th>
+      <th pSortableColumn="returnQty" class="returns-grid__col--right returns-grid__col--low-priority">
+        Qty <p-sortIcon field="returnQty" />
+      </th>
+      <th pSortableColumn="returnValueUsd" class="returns-grid__col--right">Return Value <p-sortIcon field="returnValueUsd" /></th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-row>
+    <tr>
+      <td>{{ row.returnNo }}</td>
+      <td>{{ row.buyerName }}</td>
+      <td class="returns-grid__col--low-priority">{{ row.unitName }}</td>
+      <td>{{ row.reasonCode }}</td>
+      <td class="returns-grid__col--right returns-grid__col--low-priority">{{ row.returnQty }}</td>
+      <td class="returns-grid__col--right">{{ row.returnValueUsd | currencyUsd }}</td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="6" class="returns-grid__empty">No returns match this filter.</td>
+    </tr>
+  </ng-template>
+</p-table>

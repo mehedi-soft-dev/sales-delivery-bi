@@ -30,6 +30,12 @@ public static class CacheKeys
 
     public static string SalesOrder(UnitScope scope) => $"bi:sales:order:summary:{ScopeSegment(scope)}";
 
+    public static string Delivery(UnitScope scope) => $"bi:sales:delivery:performance:{ScopeSegment(scope)}";
+
+    public static string Invoice(UnitScope scope) => $"bi:sales:invoice:summary:{ScopeSegment(scope)}";
+
+    public static string Return(UnitScope scope) => $"bi:sales:return:summary:{ScopeSegment(scope)}";
+
     private static string ScopeSegment(UnitScope scope) => scope.IsUnrestricted
         ? "unit:all"
         : $"unit:{string.Join(',', scope.UnitIds.OrderBy(id => id))}";

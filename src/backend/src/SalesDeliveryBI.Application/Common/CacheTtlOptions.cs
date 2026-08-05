@@ -17,4 +17,13 @@ public class CacheTtlOptions
 
     /// <summary>Per docs/requirements/Sales_Delivery_BI_Implementation_Proposal.md §9 ("Order Backlog/Fulfillment").</summary>
     public TimeSpan SalesOrder { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>Per README.md's implementation proposal §9 ("Delivery Performance").</summary>
+    public TimeSpan Delivery { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>Per README.md's implementation proposal §9 ("Invoice AR Aging").</summary>
+    public TimeSpan Invoice { get; set; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>Per README.md's implementation proposal §9 ("Returns Summary").</summary>
+    public TimeSpan Return { get; set; } = TimeSpan.FromMinutes(15);
 }

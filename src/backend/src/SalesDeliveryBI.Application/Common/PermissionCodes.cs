@@ -28,6 +28,18 @@ public static class PermissionCodes
     public const string SalesOrderView = "bi.salesorder.view";
     public const string SalesOrderViewAllUnits = "bi.salesorder.viewAllUnits";
 
+    /// <summary>Delivery/Challan module — one dashboard, same single-code shape as Sales Order.</summary>
+    public const string DeliveryView = "bi.delivery.view";
+    public const string DeliveryViewAllUnits = "bi.delivery.viewAllUnits";
+
+    /// <summary>Sales Invoice module — one dashboard, same single-code shape as Sales Order.</summary>
+    public const string InvoiceView = "bi.invoice.view";
+    public const string InvoiceViewAllUnits = "bi.invoice.viewAllUnits";
+
+    /// <summary>Return/Credit Note module — one dashboard, same single-code shape as Sales Order.</summary>
+    public const string ReturnView = "bi.return.view";
+    public const string ReturnViewAllUnits = "bi.return.viewAllUnits";
+
     /// <summary>View-only access to Admin > Users/Roles/Permissions — seeded to SuperAdmin only (DatabaseSeeder).</summary>
     public const string AdminView = "admin.access.view";
 
@@ -42,6 +54,8 @@ public static class PermissionCodes
     public static readonly string[] All =
     [
         QuotationViewPipeline, QuotationViewConversion, QuotationViewAging, QuotationViewSummary,
-        QuotationViewAllUnits, SalesOrderView, SalesOrderViewAllUnits, AdminView, AdminManage,
+        QuotationViewAllUnits, SalesOrderView, SalesOrderViewAllUnits,
+        DeliveryView, DeliveryViewAllUnits, InvoiceView, InvoiceViewAllUnits, ReturnView, ReturnViewAllUnits,
+        AdminView, AdminManage,
     ];
 }

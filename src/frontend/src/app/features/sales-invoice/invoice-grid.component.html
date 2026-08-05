@@ -1,0 +1,50 @@
+<p-table
+  class="invoice-grid"
+  [value]="page().items"
+  [lazy]="true"
+  (onLazyLoad)="lazyLoad.emit($event)"
+  [paginator]="true"
+  [rows]="page().pageSize"
+  [first]="(page().page - 1) * page().pageSize"
+  [totalRecords]="page().totalCount"
+  [loading]="loading()"
+  [sortField]="sortField()"
+  [sortOrder]="sortOrder()"
+  [rowsPerPageOptions]="[10, 20, 50]"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} results"
+  dataKey="invoiceId"
+  responsiveLayout="scroll"
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="invoiceNo">Invoice No. <p-sortIcon field="invoiceNo" /></th>
+      <th pSortableColumn="buyerName">Buyer <p-sortIcon field="buyerName" /></th>
+      <th pSortableColumn="unitName" class="invoice-grid__col--low-priority">Unit <p-sortIcon field="unitName" /></th>
+      <th pSortableColumn="arStatus">AR Status <p-sortIcon field="arStatus" /></th>
+      <th pSortableColumn="daysOverdue" class="invoice-grid__col--right invoice-grid__col--low-priority">
+        Days Overdue <p-sortIcon field="daysOverdue" />
+      </th>
+      <th pSortableColumn="invoiceValueUsd" class="invoice-grid__col--right">Invoice Value <p-sortIcon field="invoiceValueUsd" /></th>
+      <th pSortableColumn="outstandingUsd" class="invoice-grid__col--right">Outstanding <p-sortIcon field="outstandingUsd" /></th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-row>
+    <tr [ngClass]="rowOverdueClass(row.arStatus)">
+      <td>{{ row.invoiceNo }}</td>
+      <td>{{ row.buyerName }}</td>
+      <td class="invoice-grid__col--low-priority">{{ row.unitName }}</td>
+      <td>{{ row.arStatus }}</td>
+      <td class="invoice-grid__col--right invoice-grid__col--low-priority">{{ row.daysOverdue }}</td>
+      <td class="invoice-grid__col--right">{{ row.invoiceValueUsd | currencyUsd }}</td>
+      <td class="invoice-grid__col--right">{{ row.outstandingUsd | currencyUsd }}</td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="7" class="invoice-grid__empty">No invoices match this filter.</td>
+    </tr>
+  </ng-template>
+</p-table>

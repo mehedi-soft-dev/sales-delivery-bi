@@ -84,6 +84,9 @@ public class DatabaseSeeder
                 PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewConversion,
                 PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewSummary,
                 PermissionCodes.QuotationViewAllUnits, PermissionCodes.SalesOrderView, PermissionCodes.SalesOrderViewAllUnits,
+                PermissionCodes.DeliveryView, PermissionCodes.DeliveryViewAllUnits,
+                PermissionCodes.InvoiceView, PermissionCodes.InvoiceViewAllUnits,
+                PermissionCodes.ReturnView, PermissionCodes.ReturnViewAllUnits,
                 PermissionCodes.AdminView, PermissionCodes.AdminManage,
             ]),
         (RoleNames.GeneralManager,
@@ -91,22 +94,39 @@ public class DatabaseSeeder
                 PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewConversion,
                 PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewSummary,
                 PermissionCodes.QuotationViewAllUnits, PermissionCodes.SalesOrderView, PermissionCodes.SalesOrderViewAllUnits,
+                PermissionCodes.DeliveryView, PermissionCodes.DeliveryViewAllUnits,
+                PermissionCodes.InvoiceView, PermissionCodes.InvoiceViewAllUnits,
+                PermissionCodes.ReturnView, PermissionCodes.ReturnViewAllUnits,
             ]),
         (RoleNames.CommercialManager,
             [
                 PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewConversion,
                 PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView,
+                PermissionCodes.DeliveryView, PermissionCodes.InvoiceView, PermissionCodes.ReturnView,
             ]),
         (RoleNames.CommercialOfficer,
-            [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView]),
+            [
+                PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView,
+                PermissionCodes.DeliveryView, PermissionCodes.InvoiceView, PermissionCodes.ReturnView,
+            ]),
         (RoleNames.Merchandiser,
-            [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView]),
+            [
+                PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView,
+                PermissionCodes.DeliveryView, PermissionCodes.InvoiceView, PermissionCodes.ReturnView,
+            ]),
         (RoleNames.FinanceManager,
             [
                 PermissionCodes.QuotationViewConversion, PermissionCodes.QuotationViewSummary, PermissionCodes.QuotationViewAllUnits,
                 PermissionCodes.SalesOrderView, PermissionCodes.SalesOrderViewAllUnits,
+                PermissionCodes.DeliveryView, PermissionCodes.DeliveryViewAllUnits,
+                PermissionCodes.InvoiceView, PermissionCodes.InvoiceViewAllUnits,
+                PermissionCodes.ReturnView, PermissionCodes.ReturnViewAllUnits,
             ]),
-        (RoleNames.Viewer, [PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView]),
+        (RoleNames.Viewer,
+            [
+                PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView,
+                PermissionCodes.DeliveryView, PermissionCodes.InvoiceView, PermissionCodes.ReturnView,
+            ]),
     ];
 
     /// <summary>
@@ -159,6 +179,9 @@ public class DatabaseSeeder
         await SeedFxRatesAsync(records, cancellationToken);
         await SeedQuotationsAsync(records, units, buyers, merchandisers, cancellationToken);
         await SeedSalesOrdersAsync(cancellationToken);
+        await SeedDeliveriesAsync(cancellationToken);
+        await SeedInvoicesAsync(cancellationToken);
+        await SeedReturnsAsync(cancellationToken);
 
         _logger.LogInformation("Database seeding complete: {UnitCount} units, {BuyerCount} buyers, {QuotationCount} quotations",
             units.Count, buyers.Count, records.Count);
@@ -234,6 +257,241 @@ public class DatabaseSeeder
             $"""
             INSERT INTO bi.mv_refresh_log (mv_name, started_at, finished_at, status, rows_affected)
             VALUES ('bi.mv_sales_order_summary', now(), now(), 'SUCCESS', {totalRows})
+            """,
+            cancellationToken);
+    }
+
+    private sealed record SalesOrderSeedRow(
+        Guid SoId, string SoNo, DateOnly SoDate, Guid BuyerId, string BuyerName,
+        Guid UnitId, string UnitName, decimal OrderValueUsd, DateOnly PromisedDeliveryDate);
+
+    /// <summary>
+    /// Delivery module (same "plain table, no OLTP source" pattern as Sales Order — discussed with the
+    /// user). One full delivery per Sales Order: every 3rd ships 5 days past its promise date, the rest
+    /// 5 days ahead of it, so the on-time-rate KPI has real variety instead of a trivial 100%/0%. Backfills
+    /// the originating SalesOrder's delivered/pending value + status now that it's actually been delivered.
+    /// </summary>
+    private async Task SeedDeliveriesAsync(CancellationToken cancellationToken)
+    {
+        List<SalesOrderSeedRow> salesOrders = await _context.Database
+            .SqlQuery<SalesOrderSeedRow>($"""
+                SELECT so_id AS "SoId", so_no AS "SoNo", so_date AS "SoDate", buyer_id AS "BuyerId", buyer_name AS "BuyerName",
+                       unit_id AS "UnitId", unit_name AS "UnitName", order_value_usd AS "OrderValueUsd",
+                       promised_delivery_date AS "PromisedDeliveryDate"
+                FROM bi.mv_sales_order_summary
+                ORDER BY so_no
+                """)
+            .ToListAsync(cancellationToken);
+
+        HashSet<Guid> existingSalesOrderIds = (await _context.Database
+                .SqlQuery<Guid>($"SELECT sales_order_id AS \"Value\" FROM bi.mv_delivery_performance")
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        int existingCount = await _context.Database
+            .SqlQuery<int>($"SELECT COUNT(*)::int AS \"Value\" FROM bi.mv_delivery_performance")
+            .SingleAsync(cancellationToken);
+
+        int nextSequence = existingCount + 1;
+
+        for (int i = 0; i < salesOrders.Count; i++)
+        {
+            SalesOrderSeedRow so = salesOrders[i];
+            if (existingSalesOrderIds.Contains(so.SoId))
+            {
+                continue;
+            }
+
+            string challanNo = $"CH-2026-{nextSequence:D4}";
+            nextSequence++;
+
+            bool late = i % 3 == 2;
+            DateOnly deliveryDate = so.PromisedDeliveryDate.AddDays(late ? 5 : -5);
+            int delayDays = deliveryDate.DayNumber - so.PromisedDeliveryDate.DayNumber;
+            string deliveryStatus = delayDays > 0 ? "Late" : "On-Time";
+
+            // delivery_id deliberately reuses so.SoId — same 1:1-per-order simplification as
+            // SeedSalesOrdersAsync reusing the originating quotation's Id.
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO bi.mv_delivery_performance
+                    (delivery_id, challan_no, delivery_date, sales_order_id, buyer_id, buyer_name, unit_id, unit_name,
+                     delivered_value_usd, promised_date, delay_days, delivery_status, last_refresh_date)
+                VALUES
+                    ({so.SoId}, {challanNo}, {deliveryDate}, {so.SoId}, {so.BuyerId}, {so.BuyerName}, {so.UnitId}, {so.UnitName},
+                     {so.OrderValueUsd}, {so.PromisedDeliveryDate}, {delayDays}, {deliveryStatus}, now())
+                """,
+                cancellationToken);
+
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                UPDATE bi.mv_sales_order_summary
+                SET delivered_value_usd = {so.OrderValueUsd}, pending_value_usd = 0::numeric, status = 'Delivered'
+                WHERE so_id = {so.SoId}
+                """,
+                cancellationToken);
+        }
+
+        int totalRows = await _context.Database
+            .SqlQuery<int>($"SELECT COUNT(*)::int AS \"Value\" FROM bi.mv_delivery_performance")
+            .SingleAsync(cancellationToken);
+
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            INSERT INTO bi.mv_refresh_log (mv_name, started_at, finished_at, status, rows_affected)
+            VALUES ('bi.mv_delivery_performance', now(), now(), 'SUCCESS', {totalRows})
+            """,
+            cancellationToken);
+    }
+
+    private sealed record DeliverySeedRow(
+        Guid DeliveryId, Guid SalesOrderId, DateOnly DeliveryDate, Guid BuyerId, string BuyerName,
+        Guid UnitId, string UnitName, decimal DeliveredValueUsd);
+
+    /// <summary>
+    /// Sales Invoice module (same "plain table, no OLTP source" pattern — discussed with the user). One
+    /// invoice per Delivery, raised a few days after delivery, due in 30 days. Every 3rd invoice is fully
+    /// paid at seed time; the rest are left unpaid so ArStatus/DaysOverdue (computed live in
+    /// InvoiceRepository off CURRENT_DATE, never stored) show real "Current"/"Overdue" variety as time
+    /// passes each seeded due_date — same live-computation convention as Quotation's days_open.
+    /// </summary>
+    private async Task SeedInvoicesAsync(CancellationToken cancellationToken)
+    {
+        List<DeliverySeedRow> deliveries = await _context.Database
+            .SqlQuery<DeliverySeedRow>($"""
+                SELECT delivery_id AS "DeliveryId", sales_order_id AS "SalesOrderId", delivery_date AS "DeliveryDate",
+                       buyer_id AS "BuyerId", buyer_name AS "BuyerName", unit_id AS "UnitId", unit_name AS "UnitName",
+                       delivered_value_usd AS "DeliveredValueUsd"
+                FROM bi.mv_delivery_performance
+                ORDER BY delivery_date
+                """)
+            .ToListAsync(cancellationToken);
+
+        HashSet<Guid> existingDeliveryIds = (await _context.Database
+                .SqlQuery<Guid>($"SELECT delivery_id AS \"Value\" FROM bi.mv_sales_invoice_summary")
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        int existingCount = await _context.Database
+            .SqlQuery<int>($"SELECT COUNT(*)::int AS \"Value\" FROM bi.mv_sales_invoice_summary")
+            .SingleAsync(cancellationToken);
+
+        int nextSequence = existingCount + 1;
+
+        for (int i = 0; i < deliveries.Count; i++)
+        {
+            DeliverySeedRow delivery = deliveries[i];
+            if (existingDeliveryIds.Contains(delivery.DeliveryId))
+            {
+                continue;
+            }
+
+            string invoiceNo = $"INV-2026-{nextSequence:D4}";
+            nextSequence++;
+
+            DateOnly invoiceDate = delivery.DeliveryDate.AddDays(3);
+            DateOnly dueDate = invoiceDate.AddDays(30);
+            decimal paidAmount = i % 3 == 0 ? delivery.DeliveredValueUsd : 0m;
+
+            // invoice_id deliberately reuses delivery.DeliveryId — same 1:1-per-delivery simplification.
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO bi.mv_sales_invoice_summary
+                    (invoice_id, invoice_no, invoice_date, delivery_id, sales_order_id, buyer_id, buyer_name, unit_id, unit_name,
+                     currency_code, invoice_value_usd, paid_amount_usd, due_date, last_refresh_date)
+                VALUES
+                    ({delivery.DeliveryId}, {invoiceNo}, {invoiceDate}, {delivery.DeliveryId}, {delivery.SalesOrderId},
+                     {delivery.BuyerId}, {delivery.BuyerName}, {delivery.UnitId}, {delivery.UnitName},
+                     'USD', {delivery.DeliveredValueUsd}, {paidAmount}, {dueDate}, now())
+                """,
+                cancellationToken);
+        }
+
+        int totalRows = await _context.Database
+            .SqlQuery<int>($"SELECT COUNT(*)::int AS \"Value\" FROM bi.mv_sales_invoice_summary")
+            .SingleAsync(cancellationToken);
+
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            INSERT INTO bi.mv_refresh_log (mv_name, started_at, finished_at, status, rows_affected)
+            VALUES ('bi.mv_sales_invoice_summary', now(), now(), 'SUCCESS', {totalRows})
+            """,
+            cancellationToken);
+    }
+
+    private sealed record InvoiceSeedRow(
+        Guid InvoiceId, DateOnly InvoiceDate, Guid BuyerId, string BuyerName,
+        Guid UnitId, string UnitName, decimal InvoiceValueUsd);
+
+    /// <summary>
+    /// Return/Credit Note module (same "plain table, no OLTP source" pattern — discussed with the user).
+    /// Deliberately just 2 of the 7 invoices get a return — a low, realistic return rate rather than an
+    /// unrealistic one covering half the dataset.
+    /// </summary>
+    private async Task SeedReturnsAsync(CancellationToken cancellationToken)
+    {
+        List<InvoiceSeedRow> invoices = await _context.Database
+            .SqlQuery<InvoiceSeedRow>($"""
+                SELECT invoice_id AS "InvoiceId", invoice_date AS "InvoiceDate", buyer_id AS "BuyerId", buyer_name AS "BuyerName",
+                       unit_id AS "UnitId", unit_name AS "UnitName", invoice_value_usd AS "InvoiceValueUsd"
+                FROM bi.mv_sales_invoice_summary
+                ORDER BY invoice_date
+                """)
+            .ToListAsync(cancellationToken);
+
+        HashSet<Guid> existingInvoiceIds = (await _context.Database
+                .SqlQuery<Guid>($"SELECT invoice_id AS \"Value\" FROM bi.mv_sales_return_summary")
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        int existingCount = await _context.Database
+            .SqlQuery<int>($"SELECT COUNT(*)::int AS \"Value\" FROM bi.mv_sales_return_summary")
+            .SingleAsync(cancellationToken);
+
+        int nextSequence = existingCount + 1;
+        (int Index, string ReasonCode)[] returnPlan = [(1, "Quality Issue"), (4, "Wrong Size")];
+
+        foreach ((int index, string reasonCode) in returnPlan)
+        {
+            if (index >= invoices.Count)
+            {
+                continue;
+            }
+
+            InvoiceSeedRow invoice = invoices[index];
+            if (existingInvoiceIds.Contains(invoice.InvoiceId))
+            {
+                continue;
+            }
+
+            string returnNo = $"CN-2026-{nextSequence:D4}";
+            nextSequence++;
+
+            DateOnly returnDate = invoice.InvoiceDate.AddDays(10);
+            decimal returnValue = Math.Round(invoice.InvoiceValueUsd * 0.15m, 2);
+
+            // return_id deliberately reuses invoice.InvoiceId — same 1:1-per-invoice simplification (each
+            // invoice gets at most one return in this seed set).
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO bi.mv_sales_return_summary
+                    (return_id, return_no, return_date, invoice_id, buyer_id, buyer_name, unit_id, unit_name,
+                     return_value_usd, return_qty, reason_code, last_refresh_date)
+                VALUES
+                    ({invoice.InvoiceId}, {returnNo}, {returnDate}, {invoice.InvoiceId}, {invoice.BuyerId}, {invoice.BuyerName},
+                     {invoice.UnitId}, {invoice.UnitName}, {returnValue}, 50, {reasonCode}, now())
+                """,
+                cancellationToken);
+        }
+
+        int totalReturnRows = await _context.Database
+            .SqlQuery<int>($"SELECT COUNT(*)::int AS \"Value\" FROM bi.mv_sales_return_summary")
+            .SingleAsync(cancellationToken);
+
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            INSERT INTO bi.mv_refresh_log (mv_name, started_at, finished_at, status, rows_affected)
+            VALUES ('bi.mv_sales_return_summary', now(), now(), 'SUCCESS', {totalReturnRows})
             """,
             cancellationToken);
     }

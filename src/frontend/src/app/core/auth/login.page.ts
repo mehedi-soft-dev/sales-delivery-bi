@@ -11,6 +11,9 @@ import { ChartBar } from '@primeicons/angular/chart-bar';
 import { ChartLine } from '@primeicons/angular/chart-line';
 import { Percentage } from '@primeicons/angular/percentage';
 import { Clock } from '@primeicons/angular/clock';
+import { ShoppingCart } from '@primeicons/angular/shopping-cart';
+import { Truck } from '@primeicons/angular/truck';
+import { Receipt } from '@primeicons/angular/receipt';
 import { Envelope } from '@primeicons/angular/envelope';
 import { Lock } from '@primeicons/angular/lock';
 import { AuthService } from './auth.service';
@@ -29,6 +32,9 @@ import { AuthService } from './auth.service';
     ChartLine,
     Percentage,
     Clock,
+    ShoppingCart,
+    Truck,
+    Receipt,
     Envelope,
     Lock,
   ],
@@ -55,7 +61,7 @@ export class LoginPage {
 
     this.authService.login(this.email, this.password).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/pipeline';
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/overview';
         void this.router.navigateByUrl(returnUrl);
       },
       error: () => {

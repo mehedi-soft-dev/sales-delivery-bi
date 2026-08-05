@@ -22,6 +22,9 @@ public static class AuthorizationPolicies
 
     public const string QuotationReadAllUnits = "QuotationReadAllUnits";
     public const string SalesOrderRead = "SalesOrderRead";
+    public const string DeliveryRead = "DeliveryRead";
+    public const string InvoiceRead = "InvoiceRead";
+    public const string ReturnRead = "ReturnRead";
     public const string AdminRead = "AdminRead";
     public const string AdminWrite = "AdminWrite";
 
@@ -61,6 +64,15 @@ public static class AuthorizationPolicies
 
             options.AddPolicy(SalesOrderRead, policy =>
                 policy.RequireClaim(PermissionClaimType, PermissionCodes.SalesOrderView));
+
+            options.AddPolicy(DeliveryRead, policy =>
+                policy.RequireClaim(PermissionClaimType, PermissionCodes.DeliveryView));
+
+            options.AddPolicy(InvoiceRead, policy =>
+                policy.RequireClaim(PermissionClaimType, PermissionCodes.InvoiceView));
+
+            options.AddPolicy(ReturnRead, policy =>
+                policy.RequireClaim(PermissionClaimType, PermissionCodes.ReturnView));
 
             options.AddPolicy(AdminRead, policy =>
                 policy.RequireClaim(PermissionClaimType, PermissionCodes.AdminView));

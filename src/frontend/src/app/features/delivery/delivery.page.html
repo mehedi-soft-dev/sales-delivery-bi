@@ -1,0 +1,45 @@
+<div class="delivery-page">
+  <app-page-header title="Delivery / Challan" subtitle="On-time delivery performance and delayed shipments" icon="truck">
+    <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
+  </app-page-header>
+
+  <p class="dashboard-scope-note">Showing every delivery on record, regardless of delivery date.</p>
+
+  @if (service.loading() && !service.data()) {
+    <app-loading-skeleton [kpiCount]="3" [contentBlockHeights]="[280, 360]" />
+  } @else if (service.error()) {
+    <div class="dashboard-state dashboard-state--error" role="alert">
+      Something went wrong loading the delivery dashboard. Please try again.
+    </div>
+  } @else if (service.data(); as delivery) {
+    <div class="dashboard-kpis">
+      <app-kpi-card label="On-Time Rate" [value]="delivery.kpis.onTimeRatePct | ratePercent" icon="check-circle" accent="green" />
+      <app-kpi-card
+        label="Delayed Shipments"
+        [value]="asCount(delivery.kpis.delayedShipmentsCount)"
+        icon="times-circle"
+        accent="red"
+      />
+      <app-kpi-card label="Delivered Value" [value]="delivery.kpis.deliveredValueUsd | currencyUsd" icon="wallet" accent="blue" />
+    </div>
+
+    <div class="dashboard-card">
+      <h2>Delivered Value by Status</h2>
+      <app-delivery-status-chart [statusBreakdown]="delivery.statusBreakdown" />
+    </div>
+
+    <div class="dashboard-card__header">
+      <h2>Deliveries</h2>
+      <span class="dashboard-card__count-badge">{{ delivery.deliveries.totalCount }} Records</span>
+    </div>
+    <div class="dashboard-card dashboard-card--table">
+      <app-delivery-grid
+        [page]="delivery.deliveries"
+        [loading]="service.loading()"
+        [sortField]="grid().sortField"
+        [sortOrder]="grid().sortDescending ? -1 : 1"
+        (lazyLoad)="onLazyLoad($event)"
+      />
+    </div>
+  }
+</div>

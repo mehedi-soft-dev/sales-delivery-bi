@@ -45,6 +45,9 @@ public static class DependencyInjection
         services.AddSingleton<DapperContext>();
         services.AddScoped<IQuotationRepository, QuotationRepository>();
         services.AddScoped<ISalesOrderRepository, SalesOrderRepository>();
+        services.AddScoped<IDeliveryRepository, DeliveryRepository>();
+        services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+        services.AddScoped<IReturnRepository, ReturnRepository>();
 
         services.AddSingleton<IConnectionMultiplexer>(_ =>
         {

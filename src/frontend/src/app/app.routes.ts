@@ -38,18 +38,15 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard/delivery',
-        loadComponent: () => import('./features/coming-soon/coming-soon.page').then((m) => m.ComingSoonPage),
-        data: { title: 'Delivery / Challan', icon: 'truck' },
+        loadComponent: () => import('./features/delivery/delivery.page').then((m) => m.DeliveryPage),
       },
       {
         path: 'dashboard/invoice',
-        loadComponent: () => import('./features/coming-soon/coming-soon.page').then((m) => m.ComingSoonPage),
-        data: { title: 'Sales Invoice', icon: 'receipt' },
+        loadComponent: () => import('./features/sales-invoice/sales-invoice.page').then((m) => m.SalesInvoicePage),
       },
       {
         path: 'dashboard/return',
-        loadComponent: () => import('./features/coming-soon/coming-soon.page').then((m) => m.ComingSoonPage),
-        data: { title: 'Return / Credit Note', icon: 'reply' },
+        loadComponent: () => import('./features/returns/returns.page').then((m) => m.ReturnsPage),
       },
       {
         path: 'admin/users',

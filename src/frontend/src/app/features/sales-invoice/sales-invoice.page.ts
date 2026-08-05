@@ -1,0 +1,39 @@
+import { Component, effect, inject, signal } from '@angular/core';
+import { CurrencyUsdPipe } from '../../shared/pipes/currency-usd.pipe';
+import { DaysOpenPipe } from '../../shared/pipes/days-open.pipe';
+import { DataAsOf } from '../../shared/components/data-as-of/data-as-of';
+import { KpiCard } from '../../shared/components/kpi-card/kpi-card';
+import { LoadingSkeleton } from '../../shared/components/loading-skeleton/loading-skeleton';
+import { PageHeader } from '../../shared/components/page-header/page-header';
+import { DEFAULT_GRID_QUERY, gridQueryFromLazyLoadEvent, type GridQuery, type TableLazyLoadEvent } from '../../shared/data/grid-query';
+import { UnitFilterStore } from '../../core/filters/unit-filter.store';
+import { InvoiceAgingChartComponent } from './invoice-aging-chart.component';
+import { InvoiceGridComponent } from './invoice-grid.component';
+import { SalesInvoiceService } from './sales-invoice.service';
+
+@Component({
+  selector: 'app-sales-invoice-page',
+  imports: [DataAsOf, KpiCard, LoadingSkeleton, PageHeader, InvoiceAgingChartComponent, InvoiceGridComponent, CurrencyUsdPipe, DaysOpenPipe],
+  templateUrl: './sales-invoice.page.html',
+  styleUrl: './sales-invoice.page.css',
+})
+export class SalesInvoicePage {
+  protected readonly service = inject(SalesInvoiceService);
+  private readonly unitFilterStore = inject(UnitFilterStore);
+
+  protected readonly grid = signal<GridQuery>(DEFAULT_GRID_QUERY);
+
+  constructor() {
+    effect(() => {
+      this.service.load({ unitId: this.unitFilterStore.unitId(), grid: this.grid() });
+    });
+  }
+
+  protected onLazyLoad(event: TableLazyLoadEvent): void {
+    this.grid.set(gridQueryFromLazyLoadEvent(event));
+  }
+
+  protected onRefresh(): void {
+    this.service.load({ unitId: this.unitFilterStore.unitId(), grid: this.grid() });
+  }
+}

@@ -1,0 +1,41 @@
+<div class="returns-page">
+  <app-page-header title="Return / Credit Note" subtitle="Return rate, value, and top reasons" icon="reply">
+    <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
+  </app-page-header>
+
+  <p class="dashboard-scope-note">Showing every return on record, regardless of return date.</p>
+
+  @if (service.loading() && !service.data()) {
+    <app-loading-skeleton [kpiCount]="2" [contentBlockHeights]="[260, 360]" />
+  } @else if (service.error()) {
+    <div class="dashboard-state dashboard-state--error" role="alert">
+      Something went wrong loading the returns dashboard. Please try again.
+    </div>
+  } @else if (service.data(); as returns) {
+    <div class="dashboard-kpis">
+      <app-kpi-card label="Return Rate" [value]="returns.kpis.returnRatePct | ratePercent" icon="percentage" accent="amber" />
+      <app-kpi-card label="Return Value" [value]="returns.kpis.returnValueUsd | currencyUsd" icon="wallet" accent="red" />
+    </div>
+
+    @if (returns.reasonBreakdown.length > 0) {
+      <div class="dashboard-card">
+        <h2>Top Return Reasons</h2>
+        <app-return-reason-chart [reasons]="returns.reasonBreakdown" />
+      </div>
+    }
+
+    <div class="dashboard-card__header">
+      <h2>Returns</h2>
+      <span class="dashboard-card__count-badge">{{ returns.returns.totalCount }} Records</span>
+    </div>
+    <div class="dashboard-card dashboard-card--table">
+      <app-returns-grid
+        [page]="returns.returns"
+        [loading]="service.loading()"
+        [sortField]="grid().sortField"
+        [sortOrder]="grid().sortDescending ? -1 : 1"
+        (lazyLoad)="onLazyLoad($event)"
+      />
+    </div>
+  }
+</div>

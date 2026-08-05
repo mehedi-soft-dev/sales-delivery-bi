@@ -101,6 +101,101 @@ export interface SalesOrderResponseDto {
   orders: PagedResult<SalesOrderRowDto>;
 }
 
+/** Delivery module — hand-typed, not yet in api-schema.d.ts (same reason as Sales Order above). */
+export interface DeliveryKpisDto {
+  onTimeRatePct: number | string;
+  delayedShipmentsCount: number | string;
+  deliveredValueUsd: number | string;
+}
+
+export interface DeliveryStatusBucketDto {
+  deliveryStatus: string;
+  count: number | string;
+  valueUsd: number | string;
+}
+
+export interface DeliveryRowDto {
+  deliveryId: string;
+  challanNo: string;
+  deliveryDate: string;
+  salesOrderId: string;
+  soNo: string;
+  buyerName: string;
+  unitName: string;
+  deliveredValueUsd: number | string;
+  promisedDate: string;
+  delayDays: number | string;
+  deliveryStatus: string;
+}
+
+export interface DeliveryResponseDto {
+  kpis: DeliveryKpisDto;
+  statusBreakdown: DeliveryStatusBucketDto[];
+  deliveries: PagedResult<DeliveryRowDto>;
+}
+
+/** Sales Invoice module — hand-typed, not yet in api-schema.d.ts. */
+export interface InvoiceKpisDto {
+  totalOutstandingUsd: number | string;
+  overdueValueUsd: number | string;
+  avgDaysSalesOutstanding: number | string;
+}
+
+export interface InvoiceAgingBucketDto {
+  bucket: string;
+  count: number | string;
+  valueUsd: number | string;
+}
+
+export interface InvoiceRowDto {
+  invoiceId: string;
+  invoiceNo: string;
+  invoiceDate: string;
+  buyerName: string;
+  unitName: string;
+  invoiceValueUsd: number | string;
+  paidAmountUsd: number | string;
+  outstandingUsd: number | string;
+  dueDate: string;
+  daysOverdue: number | string;
+  arStatus: string;
+}
+
+export interface InvoiceResponseDto {
+  kpis: InvoiceKpisDto;
+  agingBuckets: InvoiceAgingBucketDto[];
+  invoices: PagedResult<InvoiceRowDto>;
+}
+
+/** Return/Credit Note module — hand-typed, not yet in api-schema.d.ts. */
+export interface ReturnKpisDto {
+  returnRatePct: number | string;
+  returnValueUsd: number | string;
+}
+
+export interface ReturnReasonBreakdownDto {
+  reasonCode: string;
+  count: number | string;
+  valueUsd: number | string;
+}
+
+export interface ReturnRowDto {
+  returnId: string;
+  returnNo: string;
+  returnDate: string;
+  buyerName: string;
+  unitName: string;
+  returnValueUsd: number | string;
+  returnQty: number | string;
+  reasonCode: string;
+}
+
+export interface ReturnResponseDto {
+  kpis: ReturnKpisDto;
+  reasonBreakdown: ReturnReasonBreakdownDto[];
+  returns: PagedResult<ReturnRowDto>;
+}
+
 /** Admin > Users/Roles/Permissions (view-only) — mirrors Application/Dtos/AdminDto.cs. */
 export interface AdminUserDto {
   userId: string;
