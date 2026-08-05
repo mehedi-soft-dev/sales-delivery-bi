@@ -83,24 +83,30 @@ public class DatabaseSeeder
             [
                 PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewConversion,
                 PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewSummary,
-                PermissionCodes.QuotationViewAllUnits, PermissionCodes.AdminView, PermissionCodes.AdminManage,
+                PermissionCodes.QuotationViewAllUnits, PermissionCodes.SalesOrderView, PermissionCodes.SalesOrderViewAllUnits,
+                PermissionCodes.AdminView, PermissionCodes.AdminManage,
             ]),
         (RoleNames.GeneralManager,
             [
                 PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewConversion,
                 PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewSummary,
-                PermissionCodes.QuotationViewAllUnits,
+                PermissionCodes.QuotationViewAllUnits, PermissionCodes.SalesOrderView, PermissionCodes.SalesOrderViewAllUnits,
             ]),
         (RoleNames.CommercialManager,
             [
                 PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewConversion,
-                PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewSummary,
+                PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView,
             ]),
-        (RoleNames.CommercialOfficer, [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewSummary]),
-        (RoleNames.Merchandiser, [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewSummary]),
+        (RoleNames.CommercialOfficer,
+            [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView]),
+        (RoleNames.Merchandiser,
+            [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView]),
         (RoleNames.FinanceManager,
-            [PermissionCodes.QuotationViewConversion, PermissionCodes.QuotationViewSummary, PermissionCodes.QuotationViewAllUnits]),
-        (RoleNames.Viewer, [PermissionCodes.QuotationViewSummary]),
+            [
+                PermissionCodes.QuotationViewConversion, PermissionCodes.QuotationViewSummary, PermissionCodes.QuotationViewAllUnits,
+                PermissionCodes.SalesOrderView, PermissionCodes.SalesOrderViewAllUnits,
+            ]),
+        (RoleNames.Viewer, [PermissionCodes.QuotationViewSummary, PermissionCodes.SalesOrderView]),
     ];
 
     /// <summary>
