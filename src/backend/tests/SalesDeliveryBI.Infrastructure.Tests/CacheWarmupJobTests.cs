@@ -50,15 +50,16 @@ public class CacheWarmupJobTests
     }
 
     [Fact]
-    public async Task WarmUpAsync_AgingMv_PopulatesTheSameKeyQuotationAppServiceReads()
+    public async Task WarmUpAsync_PipelineMv_AlsoPopulatesAgingSameKeyQuotationAppServiceReads()
     {
+        // Aging warms off the same trigger as Pipeline — both read bi.mv_sales_quotation_summary.
         CacheWarmupJob job = CreateJob(out IConnectionMultiplexer redis);
         string key = CacheKeys.Aging(UnitScope.Unrestricted(), includeDraft: false, null, null);
         string draftKey = CacheKeys.Aging(UnitScope.Unrestricted(), includeDraft: true, null, null);
         await redis.GetDatabase().KeyDeleteAsync(key);
         await redis.GetDatabase().KeyDeleteAsync(draftKey);
 
-        await job.WarmUpAsync(CacheWarmupJob.QuotationPipelineDailyMv, CancellationToken.None);
+        await job.WarmUpAsync(CacheWarmupJob.SalesQuotationSummaryMv, CancellationToken.None);
 
         Assert.True(await redis.GetDatabase().KeyExistsAsync(key));
         Assert.True(await redis.GetDatabase().KeyExistsAsync(draftKey));

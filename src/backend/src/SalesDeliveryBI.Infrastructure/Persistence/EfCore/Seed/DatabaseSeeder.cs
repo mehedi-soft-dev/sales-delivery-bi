@@ -152,9 +152,84 @@ public class DatabaseSeeder
 
         await SeedFxRatesAsync(records, cancellationToken);
         await SeedQuotationsAsync(records, units, buyers, merchandisers, cancellationToken);
+        await SeedSalesOrdersAsync(cancellationToken);
 
         _logger.LogInformation("Database seeding complete: {UnitCount} units, {BuyerCount} buyers, {QuotationCount} quotations",
             units.Count, buyers.Count, records.Count);
+    }
+
+    /// <summary>
+    /// Sales Order module (docs/plans, "MV instead of actual table" — discussed with the user): no OLTP
+    /// table exists for this module, so bi.mv_sales_order_summary is a plain table seeded directly here,
+    /// one row per already-Converted quotation. Backfills Quotation.ConvertedToSoNo (always null in the
+    /// source seed data — never actually populated) with the generated SO number, closing the loop between
+    /// the two modules. Idempotent by quotation_id; re-running always appends a fresh bi.mv_refresh_log row
+    /// (mirrors a real MV refresh always logging a run, even one that changes nothing) so "Data as of"
+    /// still advances the same way it would for a real refresh.
+    /// </summary>
+    private async Task SeedSalesOrdersAsync(CancellationToken cancellationToken)
+    {
+        List<Quotation> convertedQuotations = await _context.Quotations
+            .Include(q => q.Buyer)
+            .Include(q => q.Merchandiser)
+            .Include(q => q.Unit)
+            .Where(q => q.Status == QuotationStatus.Converted)
+            .OrderBy(q => q.QuotationDate)
+            .ToListAsync(cancellationToken);
+
+        HashSet<Guid> existingQuotationIds = (await _context.Database
+                .SqlQuery<Guid>($"SELECT quotation_id AS \"Value\" FROM bi.mv_sales_order_summary WHERE quotation_id IS NOT NULL")
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        int existingCount = await _context.Database
+            .SqlQuery<int>($"SELECT COUNT(*)::int AS \"Value\" FROM bi.mv_sales_order_summary")
+            .SingleAsync(cancellationToken);
+
+        int nextSequence = existingCount + 1;
+
+        foreach (Quotation quotation in convertedQuotations)
+        {
+            if (existingQuotationIds.Contains(quotation.Id))
+            {
+                continue;
+            }
+
+            string soNo = $"SO-2026-{nextSequence:D4}";
+            nextSequence++;
+
+            DateOnly soDate = DateOnly.FromDateTime(quotation.ConvertedDate ?? quotation.StatusDate);
+            DateOnly promisedDeliveryDate = soDate.AddDays(30);
+
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO bi.mv_sales_order_summary
+                    (so_id, so_no, so_date, quotation_id, buyer_id, buyer_name, merchandiser_id, merchandiser_name,
+                     unit_id, unit_name, currency_code, order_value_usd, delivered_value_usd, pending_value_usd,
+                     status, promised_delivery_date, last_refresh_date)
+                VALUES
+                    ({quotation.Id}, {soNo}, {soDate}, {quotation.Id}, {quotation.BuyerId}, {quotation.Buyer!.BuyerName},
+                     {quotation.MerchandiserId}, {quotation.Merchandiser!.MerchandiserName}, {quotation.UnitId}, {quotation.Unit!.UnitName},
+                     {quotation.CurrencyCode}, {quotation.Value}, 0::numeric, {quotation.Value},
+                     'Open', {promisedDeliveryDate}, now())
+                """,
+                cancellationToken);
+
+            quotation.ConvertedToSoNo = soNo;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        int totalRows = await _context.Database
+            .SqlQuery<int>($"SELECT COUNT(*)::int AS \"Value\" FROM bi.mv_sales_order_summary")
+            .SingleAsync(cancellationToken);
+
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            INSERT INTO bi.mv_refresh_log (mv_name, started_at, finished_at, status, rows_affected)
+            VALUES ('bi.mv_sales_order_summary', now(), now(), 'SUCCESS', {totalRows})
+            """,
+            cancellationToken);
     }
 
     private async Task<Dictionary<string, Role>> SeedRolesAsync(CancellationToken cancellationToken)

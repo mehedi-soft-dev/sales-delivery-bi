@@ -10,8 +10,9 @@ public static class CacheWarmupScheduling
     {
         services.AddQuartz(q =>
         {
+            // Pipeline and Aging share this one trigger — both read bi.mv_sales_quotation_summary, so both
+            // warm off its 3-minute refresh cadence (CacheWarmupJob.WarmPipelineAndAgingAsync).
             AddWarmupJob(q, CacheWarmupJob.SalesQuotationSummaryMv, "0/3", "PipelineWarmup");
-            AddWarmupJob(q, CacheWarmupJob.QuotationPipelineDailyMv, "0/15", "AgingWarmup");
             AddWarmupJob(q, CacheWarmupJob.QuotationConversionRateMv, "0/15", "ConversionWarmup");
         });
 

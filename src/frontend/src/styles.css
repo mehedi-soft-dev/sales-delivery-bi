@@ -85,6 +85,17 @@ body {
   font-weight: 600;
 }
 
+/* Date-scope caption at the top of every dashboard page — states exactly which quotation dates a page's
+   numbers cover. Different dashboards intentionally use different date semantics (all-time-open snapshot
+   vs. calendar month-to-date vs. a user-adjustable range) and that distinction wasn't visible anywhere in
+   the UI, which is what made cross-dashboard numbers (e.g. Executive Overview vs. Conversion) read as
+   contradictory rather than as answering different questions. */
+.dashboard-scope-note {
+  margin: -0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+}
+
 .dashboard-state {
   padding: 2rem 1.5rem;
   border-radius: 12px;

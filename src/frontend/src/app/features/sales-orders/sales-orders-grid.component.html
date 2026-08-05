@@ -1,0 +1,52 @@
+<p-table
+  class="sales-orders-grid"
+  [value]="page().items"
+  [lazy]="true"
+  (onLazyLoad)="lazyLoad.emit($event)"
+  [paginator]="true"
+  [rows]="page().pageSize"
+  [first]="(page().page - 1) * page().pageSize"
+  [totalRecords]="page().totalCount"
+  [loading]="loading()"
+  [sortField]="sortField()"
+  [sortOrder]="sortOrder()"
+  [rowsPerPageOptions]="[10, 20, 50]"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} results"
+  dataKey="soId"
+  responsiveLayout="scroll"
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="soNo">Order No. <p-sortIcon field="soNo" /></th>
+      <th pSortableColumn="buyerName">Buyer <p-sortIcon field="buyerName" /></th>
+      <th pSortableColumn="merchandiserName" class="sales-orders-grid__col--low-priority">
+        Merchandiser <p-sortIcon field="merchandiserName" />
+      </th>
+      <th pSortableColumn="unitName" class="sales-orders-grid__col--low-priority">Unit <p-sortIcon field="unitName" /></th>
+      <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+      <th pSortableColumn="orderValueUsd" class="sales-orders-grid__col--right">Order Value <p-sortIcon field="orderValueUsd" /></th>
+      <th pSortableColumn="pendingValueUsd" class="sales-orders-grid__col--right sales-orders-grid__col--low-priority">
+        Pending Value <p-sortIcon field="pendingValueUsd" />
+      </th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-row>
+    <tr>
+      <td>{{ row.soNo }}</td>
+      <td>{{ row.buyerName }}</td>
+      <td class="sales-orders-grid__col--low-priority">{{ row.merchandiserName }}</td>
+      <td class="sales-orders-grid__col--low-priority">{{ row.unitName }}</td>
+      <td>{{ row.status }}</td>
+      <td class="sales-orders-grid__col--right">{{ row.orderValueUsd | currencyUsd }}</td>
+      <td class="sales-orders-grid__col--right sales-orders-grid__col--low-priority">{{ row.pendingValueUsd | currencyUsd }}</td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="7" class="sales-orders-grid__empty">No sales orders match this filter.</td>
+    </tr>
+  </ng-template>
+</p-table>

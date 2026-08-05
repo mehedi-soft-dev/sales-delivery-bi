@@ -5,6 +5,8 @@
     <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
   </app-page-header>
 
+  <p class="dashboard-scope-note">Showing every currently open quotation, regardless of quotation date.</p>
+
   @if (service.loading() && !service.data()) {
     <app-loading-skeleton [kpiCount]="3" [contentBlockHeights]="[300, 360]" />
   } @else if (service.error()) {

@@ -18,7 +18,6 @@ public class CacheWarmupJob : IJob
     public const string MvNameDataKey = "MvName";
 
     public const string SalesQuotationSummaryMv = "bi.mv_sales_quotation_summary";
-    public const string QuotationPipelineDailyMv = "bi.mv_quotation_pipeline_daily";
     public const string QuotationConversionRateMv = "bi.mv_quotation_conversion_rate";
 
     private static readonly UnitScope UnrestrictedScope = UnitScope.Unrestricted();
@@ -58,10 +57,14 @@ public class CacheWarmupJob : IJob
         }
     }
 
+    // Pipeline and Aging both read bi.mv_sales_quotation_summary (QuotationRepository.cs), so both warm off
+    // its refresh trigger — there used to be a separate trigger keyed to bi.mv_quotation_pipeline_daily for
+    // Aging, but that MV was dropped (it was never queried by anything and, being a materialized view with
+    // no append/history mechanism, couldn't have served its intended "daily snapshot" purpose anyway); its
+    // pg_cron cadence had nothing to do with Aging's real data dependency.
     private Task WarmAsync(string mvName, CancellationToken cancellationToken) => mvName switch
     {
-        SalesQuotationSummaryMv => WarmPipelineAsync(cancellationToken),
-        QuotationPipelineDailyMv => WarmAgingAsync(cancellationToken),
+        SalesQuotationSummaryMv => WarmPipelineAndAgingAsync(cancellationToken),
         QuotationConversionRateMv => WarmConversionAsync(cancellationToken),
         _ => LogUnknownMvAsync(mvName),
     };
@@ -75,6 +78,12 @@ public class CacheWarmupJob : IJob
     // Return type is deliberately the non-generic Task, not Task<DashboardResponse<T>> — WarmAsync's switch
     // expression above calls these three plus LogUnknownMvAsync as one common type; T differs per MV.
 #pragma warning disable CA1859
+    private async Task WarmPipelineAndAgingAsync(CancellationToken cancellationToken)
+    {
+        await WarmPipelineAsync(cancellationToken);
+        await WarmAgingAsync(cancellationToken);
+    }
+
     // Only the unfiltered (fromDate/toDate = null) variant is warmed — dates are arbitrary user-chosen
     // input, same reason WarmConversionAsync only warms the current month rather than every possible range.
     private async Task WarmPipelineAsync(CancellationToken cancellationToken)

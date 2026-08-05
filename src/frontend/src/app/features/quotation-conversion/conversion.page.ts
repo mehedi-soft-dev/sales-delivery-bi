@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CurrencyUsdPipe } from '../../shared/pipes/currency-usd.pipe';
@@ -21,6 +22,7 @@ import { ConversionService } from './conversion.service';
   selector: 'app-conversion-page',
   imports: [
     DataAsOf,
+    DatePipe,
     DateRangeFilter,
     KpiCard,
     LoadingSkeleton,

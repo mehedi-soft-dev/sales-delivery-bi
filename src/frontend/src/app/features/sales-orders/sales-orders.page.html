@@ -1,0 +1,50 @@
+<div class="sales-orders-page">
+  <app-page-header title="Sales Orders" subtitle="Open backlog and order-to-delivery lead time" icon="shopping-cart">
+    <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
+  </app-page-header>
+
+  <p class="dashboard-scope-note">Showing every currently open sales order, regardless of order date.</p>
+
+  @if (service.loading() && !service.data()) {
+    <app-loading-skeleton [kpiCount]="3" [contentBlockHeights]="[300, 360]" />
+  } @else if (service.error()) {
+    <div class="dashboard-state dashboard-state--error" role="alert">
+      Something went wrong loading the sales orders dashboard. Please try again.
+    </div>
+  } @else if (service.data(); as salesOrders) {
+    <div class="dashboard-kpis">
+      <app-kpi-card
+        label="Open Backlog Value"
+        [value]="salesOrders.kpis.openBacklogValueUsd | currencyUsd"
+        icon="wallet"
+        accent="blue"
+      />
+      <app-kpi-card label="Order Count" [value]="asCount(salesOrders.kpis.orderCount)" icon="file" accent="green" />
+      <app-kpi-card
+        label="Avg. Order-to-Promised-Delivery"
+        [value]="salesOrders.kpis.avgOrderToPromisedDeliveryDays | daysOpen"
+        icon="calendar-clock"
+        accent="amber"
+      />
+    </div>
+
+    <div class="dashboard-card">
+      <h2>Backlog Value &amp; Order Count by Status</h2>
+      <app-sales-order-status-chart [statusBreakdown]="salesOrders.statusBreakdown" />
+    </div>
+
+    <div class="dashboard-card__header">
+      <h2>Sales Orders</h2>
+      <span class="dashboard-card__count-badge">{{ salesOrders.orders.totalCount }} Records</span>
+    </div>
+    <div class="dashboard-card dashboard-card--table">
+      <app-sales-orders-grid
+        [page]="salesOrders.orders"
+        [loading]="service.loading()"
+        [sortField]="grid().sortField"
+        [sortOrder]="grid().sortDescending ? -1 : 1"
+        (lazyLoad)="onLazyLoad($event)"
+      />
+    </div>
+  }
+</div>

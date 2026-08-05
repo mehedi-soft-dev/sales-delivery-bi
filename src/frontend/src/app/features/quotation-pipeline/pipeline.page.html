@@ -12,6 +12,8 @@
     <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
   </app-page-header>
 
+  <p class="dashboard-scope-note">Showing every currently open quotation, regardless of quotation date.</p>
+
   @if (statusFilter() || buyerNameFilter()) {
     <div class="pipeline-page__filter-chips">
       @if (statusFilter(); as status) {

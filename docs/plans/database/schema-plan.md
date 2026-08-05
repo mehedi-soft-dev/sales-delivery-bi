@@ -156,9 +156,9 @@ CREATE UNIQUE INDEX ux_mv_quotation_summary ON bi.mv_sales_quotation_summary (qu
 
 `quotation_id`, `buyer_id`, `merchandiser_id`, `unit_id` are all `uuid` — matches the API contract's GUID-typed IDs.
 
-### 2. `bi.mv_quotation_pipeline_daily` (supporting)
+### 2. `bi.mv_quotation_pipeline_daily` — dropped (discussed with the user)
 
-Daily snapshot, grouped by `status`, `unit_id` — open count + value per status per day. Reads from `mv_sales_quotation_summary`, not the OLTP tables directly.
+Originally a "daily snapshot" grouped by `status`, `unit_id`. Dropped via the `DropQuotationPipelineDailyMv` migration: nothing ever queried it, and as a materialized *view* (fully recomputed and replaced on every `REFRESH`, `snapshot_date` always `CURRENT_DATE`) it had no append/history mechanism — it could never accumulate a multi-day time series, which was the entire point of a "daily snapshot." A real version of this feature would need an append-only snapshot table, not a materialized view. The Pipeline/Aging dashboards get their current-state numbers directly from `mv_sales_quotation_summary` and never needed this MV.
 
 ### 3. `bi.mv_quotation_conversion_rate` (supporting)
 
@@ -187,7 +187,6 @@ CREATE TABLE bi.mv_refresh_log (
 | MV | Cadence |
 |---|---|
 | `mv_sales_quotation_summary` | 3 min |
-| `mv_quotation_pipeline_daily` | 15 min |
 | `mv_quotation_conversion_rate` | 15 min |
 
 `CONCURRENTLY` requires the unique index above — without it, refresh takes an `ACCESS EXCLUSIVE` lock and dashboards hang mid-refresh. No MV ships without its unique index.

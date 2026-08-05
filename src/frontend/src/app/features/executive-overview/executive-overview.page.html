@@ -3,6 +3,11 @@
     <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
   </app-page-header>
 
+  <p class="dashboard-scope-note">
+    Open Pipeline Value and High-Value Aged Alerts reflect quotations open right now. Conversion Rate covers
+    {{ (service.lastRefresh() | date: 'MMMM y') || 'this month' }} only, month-to-date.
+  </p>
+
   @if (service.loading() && !service.data()) {
     <app-loading-skeleton [kpiCount]="3" [contentBlockHeights]="[]" />
   } @else if (service.error()) {

@@ -34,8 +34,7 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard/sales-orders',
-        loadComponent: () => import('./features/coming-soon/coming-soon.page').then((m) => m.ComingSoonPage),
-        data: { title: 'Sales Orders', icon: 'shopping-cart' },
+        loadComponent: () => import('./features/sales-orders/sales-orders.page').then((m) => m.SalesOrdersPage),
       },
       {
         path: 'dashboard/delivery',

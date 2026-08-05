@@ -21,6 +21,13 @@ public static class PermissionCodes
 
     public const string QuotationViewAllUnits = "bi.quotation.viewAllUnits";
 
+    /// <summary>
+    /// Sales Order module — one code for the one dashboard (unlike Quotations' 3-way split, this module has
+    /// a single dashboard per docs/requirements/Sales_Delivery_BI_Implementation_Proposal.md's later extension).
+    /// </summary>
+    public const string SalesOrderView = "bi.salesorder.view";
+    public const string SalesOrderViewAllUnits = "bi.salesorder.viewAllUnits";
+
     /// <summary>View-only access to Admin > Users/Roles/Permissions — seeded to SuperAdmin only (DatabaseSeeder).</summary>
     public const string AdminView = "admin.access.view";
 
@@ -35,6 +42,6 @@ public static class PermissionCodes
     public static readonly string[] All =
     [
         QuotationViewPipeline, QuotationViewConversion, QuotationViewAging, QuotationViewSummary,
-        QuotationViewAllUnits, AdminView, AdminManage,
+        QuotationViewAllUnits, SalesOrderView, SalesOrderViewAllUnits, AdminView, AdminManage,
     ];
 }

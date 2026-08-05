@@ -5,6 +5,11 @@
 
   <app-date-range-filter [initialValue]="defaultDateRange" (filterChange)="onDateRangeChange($event)" />
 
+  <p class="dashboard-scope-note">
+    Showing quotations dated {{ (dateRange().fromDate | date: 'MMM d, y') || 'the earliest record' }} through
+    {{ (dateRange().toDate | date: 'MMM d, y') || 'today' }}.
+  </p>
+
   @if (service.loading() && !service.data()) {
     <app-loading-skeleton [kpiCount]="4" [contentBlockHeights]="[280, 280, 260, 320]" />
   } @else if (service.error()) {

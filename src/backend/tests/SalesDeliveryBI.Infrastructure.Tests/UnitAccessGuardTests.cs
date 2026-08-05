@@ -104,4 +104,36 @@ public class UnitAccessGuardTests
         Assert.False(scope.IsUnrestricted);
         Assert.Equal([UnitA], scope.UnitIds);
     }
+
+    [Fact]
+    public void Validate_WithExplicitAllUnitsPermissionCode_UsesThatCodeNotQuotationViewAllUnits()
+    {
+        // A caller with a DIFFERENT module's all-units code (not bi.quotation.viewAllUnits) must still be
+        // treated as unrestricted when that code is the one explicitly passed in.
+        var guard = new UnitAccessGuard(new FakeCurrentUserContext
+        {
+            Permissions = [PermissionCodes.SalesOrderViewAllUnits],
+            UnitIds = [UnitA],
+        });
+
+        UnitScope scope = guard.Validate(null, PermissionCodes.SalesOrderViewAllUnits);
+
+        Assert.True(scope.IsUnrestricted);
+    }
+
+    [Fact]
+    public void Validate_WithExplicitAllUnitsPermissionCode_QuotationViewAllUnitsAloneDoesNotGrantIt()
+    {
+        // Holding bi.quotation.viewAllUnits must NOT satisfy a different module's all-units check.
+        var guard = new UnitAccessGuard(new FakeCurrentUserContext
+        {
+            Permissions = [PermissionCodes.QuotationViewAllUnits],
+            UnitIds = [UnitA],
+        });
+
+        UnitScope scope = guard.Validate(UnitA, PermissionCodes.SalesOrderViewAllUnits);
+
+        Assert.False(scope.IsUnrestricted);
+        Assert.Equal([UnitA], scope.UnitIds);
+    }
 }

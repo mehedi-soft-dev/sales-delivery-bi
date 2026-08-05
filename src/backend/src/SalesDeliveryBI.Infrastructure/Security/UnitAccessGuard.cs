@@ -13,9 +13,11 @@ public class UnitAccessGuard : IUnitAccessGuard
         _currentUserContext = currentUserContext;
     }
 
-    public UnitScope Validate(Guid? requestedUnitId)
+    public UnitScope Validate(Guid? requestedUnitId) => Validate(requestedUnitId, PermissionCodes.QuotationViewAllUnits);
+
+    public UnitScope Validate(Guid? requestedUnitId, string allUnitsPermissionCode)
     {
-        bool hasViewAllUnits = _currentUserContext.Permissions.Contains(PermissionCodes.QuotationViewAllUnits);
+        bool hasViewAllUnits = _currentUserContext.Permissions.Contains(allUnitsPermissionCode);
 
         if (hasViewAllUnits)
         {

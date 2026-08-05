@@ -14,4 +14,7 @@ public class CacheTtlOptions
     public TimeSpan Detail { get; set; } = TimeSpan.FromMinutes(5);
     public TimeSpan Summary { get; set; } = TimeSpan.FromMinutes(5);
     public TimeSpan Units { get; set; } = TimeSpan.FromMinutes(30);
+
+    /// <summary>Per docs/requirements/Sales_Delivery_BI_Implementation_Proposal.md §9 ("Order Backlog/Fulfillment").</summary>
+    public TimeSpan SalesOrder { get; set; } = TimeSpan.FromMinutes(5);
 }

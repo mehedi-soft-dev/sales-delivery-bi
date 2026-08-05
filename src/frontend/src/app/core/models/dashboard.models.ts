@@ -63,6 +63,44 @@ export interface AgingResponseDto {
   agedQuotations: PagedResult<AgedQuotationDto>;
 }
 
+/**
+ * Sales Order module — hand-typed like the *ResponseDto interfaces above, not yet in api-schema.d.ts
+ * (that file is generated from a running backend via `npm run generate:api-types`); regenerate it once
+ * the backend is up and replace these with `components['schemas'][...]` like the rest of this file.
+ */
+export interface SalesOrderKpisDto {
+  openBacklogValueUsd: number | string;
+  orderCount: number | string;
+  avgOrderToPromisedDeliveryDays: number | string;
+}
+
+export interface SalesOrderStatusBucketDto {
+  status: string;
+  count: number | string;
+  valueUsd: number | string;
+}
+
+export interface SalesOrderRowDto {
+  soId: string;
+  soNo: string;
+  soDate: string;
+  quotationId: string | null;
+  buyerName: string;
+  merchandiserName: string;
+  unitName: string;
+  orderValueUsd: number | string;
+  deliveredValueUsd: number | string;
+  pendingValueUsd: number | string;
+  status: string;
+  promisedDeliveryDate: string;
+}
+
+export interface SalesOrderResponseDto {
+  kpis: SalesOrderKpisDto;
+  statusBreakdown: SalesOrderStatusBucketDto[];
+  orders: PagedResult<SalesOrderRowDto>;
+}
+
 /** Admin > Users/Roles/Permissions (view-only) — mirrors Application/Dtos/AdminDto.cs. */
 export interface AdminUserDto {
   userId: string;

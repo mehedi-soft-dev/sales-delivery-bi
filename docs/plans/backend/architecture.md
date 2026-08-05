@@ -137,9 +137,10 @@ Quartz.Extensions.Hosting
 
   | MV / Dashboard | `pg_cron` Cadence | Quartz Warm-up Trigger |
   |---|---|---|
-  | Pipeline (`mv_sales_quotation_summary`) | 3 min | every 3 min, +15s offset |
+  | Pipeline + Aging (`mv_sales_quotation_summary`) | 3 min | every 3 min, +15s offset |
   | Conversion (`mv_quotation_conversion_rate`) | 15 min | every 15 min, +15s offset |
-  | Aging (`mv_quotation_pipeline_daily`) | 15 min | every 15 min, +15s offset |
+
+  **Revised (discussed with the user):** Aging used to warm off a separate `mv_quotation_pipeline_daily`-keyed trigger on a 15-min cadence, even though Aging actually reads `mv_sales_quotation_summary` (same as Pipeline) — a mismatch left over from that MV, which is now dropped (`schema-plan.md` §2). Aging now warms off the same 3-min Pipeline trigger (`CacheWarmupJob.WarmPipelineAndAgingAsync`), correctly matching its real data dependency.
 
 - The job calls the same repository methods the API would (`IQuotationRepository`), populating Redis under the exact same cache keys `QuotationAppService` uses via `ICacheService` — no separate warm-up-specific key scheme, or the API would still miss on first request.
 - Job failures are logged (Serilog) but never throw past the job boundary — a failed warm-up just means the next real request pays the miss cost once; it must not crash the host.

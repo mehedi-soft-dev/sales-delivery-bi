@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, effect, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CurrencyUsdPipe } from '../../shared/pipes/currency-usd.pipe';
@@ -11,7 +12,7 @@ import { ExecutiveOverviewService } from './executive-overview.service';
 
 @Component({
   selector: 'app-executive-overview-page',
-  imports: [DataAsOf, KpiCard, LoadingSkeleton, PageHeader, RouterLink, CurrencyUsdPipe, RatePercentPipe],
+  imports: [DataAsOf, DatePipe, KpiCard, LoadingSkeleton, PageHeader, RouterLink, CurrencyUsdPipe, RatePercentPipe],
   templateUrl: './executive-overview.page.html',
   styleUrl: './executive-overview.page.css',
 })

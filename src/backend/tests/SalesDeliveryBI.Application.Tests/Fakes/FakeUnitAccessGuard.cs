@@ -18,4 +18,6 @@ internal sealed class FakeUnitAccessGuard : IUnitAccessGuard
         CallCount++;
         return _validate(requestedUnitId);
     }
+
+    public UnitScope Validate(Guid? requestedUnitId, string allUnitsPermissionCode) => Validate(requestedUnitId);
 }
