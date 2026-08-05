@@ -80,13 +80,27 @@ public class DatabaseSeeder
     private static readonly (string RoleName, string[] PermissionCodes)[] SeedRolePermissions =
     [
         (RoleNames.SuperAdmin,
-            [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits, PermissionCodes.AdminView, PermissionCodes.AdminManage]),
-        (RoleNames.GeneralManager, [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits]),
-        (RoleNames.FinanceManager, [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits]),
-        (RoleNames.CommercialManager, [PermissionCodes.QuotationView]),
-        (RoleNames.CommercialOfficer, [PermissionCodes.QuotationView]),
-        (RoleNames.Merchandiser, [PermissionCodes.QuotationView]),
-        (RoleNames.Viewer, [PermissionCodes.QuotationView]),
+            [
+                PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewConversion,
+                PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewSummary,
+                PermissionCodes.QuotationViewAllUnits, PermissionCodes.AdminView, PermissionCodes.AdminManage,
+            ]),
+        (RoleNames.GeneralManager,
+            [
+                PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewConversion,
+                PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewSummary,
+                PermissionCodes.QuotationViewAllUnits,
+            ]),
+        (RoleNames.CommercialManager,
+            [
+                PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewConversion,
+                PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewSummary,
+            ]),
+        (RoleNames.CommercialOfficer, [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewSummary]),
+        (RoleNames.Merchandiser, [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewSummary]),
+        (RoleNames.FinanceManager,
+            [PermissionCodes.QuotationViewConversion, PermissionCodes.QuotationViewSummary, PermissionCodes.QuotationViewAllUnits]),
+        (RoleNames.Viewer, [PermissionCodes.QuotationViewSummary]),
     ];
 
     /// <summary>
@@ -100,9 +114,9 @@ public class DatabaseSeeder
     [
         (Guid.Parse("66666666-6666-6666-6666-666666666601"), "admin@salesdeliverybi.dev", "Admin User",
             RoleNames.SuperAdmin, []),
-        (Guid.Parse("66666666-6666-6666-6666-666666666602"), "mehedi.hasan@salesdeliverybi.dev", "Mehedi Hasan",
+        (Guid.Parse("66666666-6666-6666-6666-666666666602"), "commercial.manager@salesdeliverybi.dev", "Commercial Manager",
             RoleNames.CommercialManager, ["Unit-1"]),
-        (Guid.Parse("66666666-6666-6666-6666-666666666603"), "jahid.hasan@salesdeliverybi.dev", "Jahid Hasan",
+        (Guid.Parse("66666666-6666-6666-6666-666666666603"), "merchandiser@salesdeliverybi.dev", "Merchandiser",
             RoleNames.Merchandiser, ["Unit-2"]),
         (Guid.Parse("66666666-6666-6666-6666-666666666604"), "general.manager@salesdeliverybi.dev", "General Manager",
             RoleNames.GeneralManager, []),

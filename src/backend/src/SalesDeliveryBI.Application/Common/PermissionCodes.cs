@@ -8,7 +8,17 @@ namespace SalesDeliveryBI.Application.Common;
 /// </summary>
 public static class PermissionCodes
 {
-    public const string QuotationView = "bi.quotation.view";
+    /// <summary>
+    /// Per-dashboard view permissions — split from the original single bi.quotation.view (discussed with the
+    /// user) because docs/requirements/Sales_Delivery_Module_BI_Developer_Guidelines.md §5 gives different
+    /// roles access to different dashboards (e.g. FinanceManager = conversion/value only, Viewer = summary
+    /// only) and one blanket code couldn't express that.
+    /// </summary>
+    public const string QuotationViewPipeline = "bi.quotation.view.pipeline";
+    public const string QuotationViewConversion = "bi.quotation.view.conversion";
+    public const string QuotationViewAging = "bi.quotation.view.aging";
+    public const string QuotationViewSummary = "bi.quotation.view.summary";
+
     public const string QuotationViewAllUnits = "bi.quotation.viewAllUnits";
 
     /// <summary>View-only access to Admin > Users/Roles/Permissions — seeded to SuperAdmin only (DatabaseSeeder).</summary>
@@ -22,5 +32,9 @@ public static class PermissionCodes
     public const string AdminManage = "admin.access.manage";
 
     /// <summary>Every permission code the system knows about — the allow-list UpdateRolePermissionsAsync validates against.</summary>
-    public static readonly string[] All = [QuotationView, QuotationViewAllUnits, AdminView, AdminManage];
+    public static readonly string[] All =
+    [
+        QuotationViewPipeline, QuotationViewConversion, QuotationViewAging, QuotationViewSummary,
+        QuotationViewAllUnits, AdminView, AdminManage,
+    ];
 }

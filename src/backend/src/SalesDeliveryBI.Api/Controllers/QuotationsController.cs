@@ -10,7 +10,7 @@ namespace SalesDeliveryBI.Api.Controllers;
 /// <summary>Thin controller per docs/plans/backend/architecture.md — calls QuotationAppService directly, no indirection.</summary>
 [ApiController]
 [Route("api/sales/quotations")]
-[Authorize(Policy = AuthorizationPolicies.QuotationRead)]
+[Authorize]
 public class QuotationsController : ControllerBase
 {
     private readonly QuotationAppService _appService;
@@ -21,6 +21,7 @@ public class QuotationsController : ControllerBase
     }
 
     [HttpGet("pipeline")]
+    [Authorize(Policy = AuthorizationPolicies.QuotationPipelineRead)]
     public async Task<ActionResult<DashboardResponse<QuotationPipelineResponseDto>>> GetPipeline(
         [FromQuery] Guid? unitId,
         [FromQuery] bool includeDraft,
@@ -33,6 +34,7 @@ public class QuotationsController : ControllerBase
     }
 
     [HttpGet("conversion")]
+    [Authorize(Policy = AuthorizationPolicies.QuotationConversionRead)]
     public async Task<ActionResult<DashboardResponse<ConversionResponseDto>>> GetConversion(
         [FromQuery] Guid? unitId,
         [FromQuery] DateOnly? fromDate,
@@ -48,6 +50,7 @@ public class QuotationsController : ControllerBase
     }
 
     [HttpGet("aging")]
+    [Authorize(Policy = AuthorizationPolicies.QuotationAgingRead)]
     public async Task<ActionResult<DashboardResponse<AgingResponseDto>>> GetAging(
         [FromQuery] Guid? unitId,
         [FromQuery] bool includeDraft,
@@ -60,6 +63,7 @@ public class QuotationsController : ControllerBase
     }
 
     [HttpGet("summary")]
+    [Authorize(Policy = AuthorizationPolicies.QuotationSummaryRead)]
     public async Task<ActionResult<DashboardResponse<QuotationSummaryDto>>> GetSummary(
         [FromQuery] Guid? unitId,
         CancellationToken cancellationToken)
@@ -69,12 +73,14 @@ public class QuotationsController : ControllerBase
 
     /// <summary>Units the caller may filter dashboards by — backs the topbar's unit dropdown.</summary>
     [HttpGet("units")]
+    [Authorize(Policy = AuthorizationPolicies.QuotationViewAny)]
     public async Task<ActionResult<IReadOnlyList<UnitOptionDto>>> GetUnits(CancellationToken cancellationToken)
     {
         return Ok(await _appService.GetUnitsAsync(cancellationToken));
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.QuotationViewAny)]
     public async Task<ActionResult<DashboardResponse<QuotationDetailDto>>> GetById(Guid id, CancellationToken cancellationToken)
     {
         DashboardResponse<QuotationDetailDto?> response = await _appService.GetByIdAsync(id, cancellationToken);

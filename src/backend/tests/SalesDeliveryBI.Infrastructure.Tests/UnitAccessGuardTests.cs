@@ -51,7 +51,7 @@ public class UnitAccessGuardTests
     {
         var guard = new UnitAccessGuard(new FakeCurrentUserContext
         {
-            Permissions = [PermissionCodes.QuotationView],
+            Permissions = [PermissionCodes.QuotationViewPipeline],
             UnitIds = [UnitA, UnitB],
         });
 
@@ -66,7 +66,7 @@ public class UnitAccessGuardTests
     {
         var guard = new UnitAccessGuard(new FakeCurrentUserContext
         {
-            Permissions = [PermissionCodes.QuotationView],
+            Permissions = [PermissionCodes.QuotationViewPipeline],
             UnitIds = [UnitA, UnitB],
         });
 
@@ -81,7 +81,7 @@ public class UnitAccessGuardTests
     {
         var guard = new UnitAccessGuard(new FakeCurrentUserContext
         {
-            Permissions = [PermissionCodes.QuotationView],
+            Permissions = [PermissionCodes.QuotationViewPipeline],
             UnitIds = [UnitA, UnitB],
         });
 
@@ -91,8 +91,8 @@ public class UnitAccessGuardTests
     [Fact]
     public void Validate_MissingQuotationViewPermissionEntirely_StillEnforcesUnitScoping()
     {
-        // IUnitAccessGuard only decides unit scope — whether the caller has bi.quotation.view at all
-        // is enforced by the QuotationRead authorization policy (Phase 10), not here.
+        // IUnitAccessGuard only decides unit scope — whether the caller has any bi.quotation.view.* permission
+        // at all is enforced by the per-dashboard authorization policies (AuthorizationPolicies), not here.
         var guard = new UnitAccessGuard(new FakeCurrentUserContext
         {
             Permissions = [],

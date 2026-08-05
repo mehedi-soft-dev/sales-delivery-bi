@@ -2,9 +2,11 @@ using System.Globalization;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 using SalesDeliveryBI.Api.Middleware;
 using SalesDeliveryBI.Application;
 using SalesDeliveryBI.Infrastructure;
+using SalesDeliveryBI.Infrastructure.Persistence.EfCore;
 using SalesDeliveryBI.Infrastructure.Persistence.EfCore.Seed;
 using Serilog;
 
@@ -81,6 +83,13 @@ try
     });
 
     WebApplication app = builder.Build();
+
+    // Applies pending EF Core migrations (sales schema + bi schema/MVs/pg_cron) on startup — required for the
+    // docker-compose deployment, which ships no separate migration step/tooling in the runtime image.
+    using (IServiceScope migrationScope = app.Services.CreateScope())
+    {
+        await migrationScope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+    }
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())

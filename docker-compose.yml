@@ -2,7 +2,7 @@ services:
   postgres:
     build:
       context: ./docker/postgres
-    container_name: salesdeliverybi-postgres
+    container_name: bi-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: salesdeliverybi
@@ -15,7 +15,7 @@ services:
       - -c
       - cron.database_name=salesdeliverybi
     ports:
-      - "5434:5432"
+      - "5444:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -26,10 +26,10 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: salesdeliverybi-redis
+    container_name: bi-redis
     restart: unless-stopped
     ports:
-      - "6381:6379"
+      - "6391:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -37,6 +37,44 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  backend:
+    build:
+      context: ./src/backend
+    container_name: bi-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__SalesDeliveryBi: "Host=postgres;Port=5432;Database=salesdeliverybi;Username=salesdeliverybi;Password=salesdeliverybi;SSL Mode=Disable"
+      ConnectionStrings__Redis: "redis:6379"
+      Jwt__Issuer: "https://localhost/identity"
+      Jwt__Audience: "salesdeliverybi"
+      Jwt__SigningKey: "docker-dev-signing-key-replace-once-the-identity-service-exists-0123456789"
+    ports:
+      - "58080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./src/frontend
+    container_name: bi-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "58090:80"
 
 volumes:
   postgres-data:

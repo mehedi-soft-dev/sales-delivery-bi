@@ -9,7 +9,17 @@ namespace SalesDeliveryBI.Infrastructure.Security;
 /// </summary>
 public static class AuthorizationPolicies
 {
-    public const string QuotationRead = "QuotationRead";
+    public const string QuotationPipelineRead = "QuotationPipelineRead";
+    public const string QuotationConversionRead = "QuotationConversionRead";
+    public const string QuotationAgingRead = "QuotationAgingRead";
+    public const string QuotationSummaryRead = "QuotationSummaryRead";
+
+    /// <summary>
+    /// Satisfied by any one of the four per-dashboard view permissions — gates GetUnits/GetById, which aren't
+    /// tied to a single dashboard (the unit dropdown and quotation detail drill-down are used from all of them).
+    /// </summary>
+    public const string QuotationViewAny = "QuotationViewAny";
+
     public const string QuotationReadAllUnits = "QuotationReadAllUnits";
     public const string AdminRead = "AdminRead";
     public const string AdminWrite = "AdminWrite";
@@ -25,8 +35,25 @@ public static class AuthorizationPolicies
     {
         services.AddAuthorization(options =>
         {
-            options.AddPolicy(QuotationRead, policy =>
-                policy.RequireClaim(PermissionClaimType, PermissionCodes.QuotationView));
+            options.AddPolicy(QuotationPipelineRead, policy =>
+                policy.RequireClaim(PermissionClaimType, PermissionCodes.QuotationViewPipeline));
+
+            options.AddPolicy(QuotationConversionRead, policy =>
+                policy.RequireClaim(PermissionClaimType, PermissionCodes.QuotationViewConversion));
+
+            options.AddPolicy(QuotationAgingRead, policy =>
+                policy.RequireClaim(PermissionClaimType, PermissionCodes.QuotationViewAging));
+
+            options.AddPolicy(QuotationSummaryRead, policy =>
+                policy.RequireClaim(PermissionClaimType, PermissionCodes.QuotationViewSummary));
+
+            options.AddPolicy(QuotationViewAny, policy =>
+                policy.RequireClaim(
+                    PermissionClaimType,
+                    PermissionCodes.QuotationViewPipeline,
+                    PermissionCodes.QuotationViewConversion,
+                    PermissionCodes.QuotationViewAging,
+                    PermissionCodes.QuotationViewSummary));
 
             options.AddPolicy(QuotationReadAllUnits, policy =>
                 policy.RequireClaim(PermissionClaimType, PermissionCodes.QuotationViewAllUnits));

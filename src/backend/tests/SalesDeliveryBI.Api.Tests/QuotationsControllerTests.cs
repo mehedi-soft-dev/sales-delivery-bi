@@ -61,7 +61,7 @@ public class QuotationsControllerTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetPipeline_MissingQuotationViewPermission_Returns403()
+    public async Task GetPipeline_MissingQuotationViewPipelinePermission_Returns403()
     {
         string token = TestJwtTokenFactory.Create(Guid.NewGuid(), permissions: [], unitIds: []);
         HttpClient client = CreateClient(token);
@@ -76,7 +76,7 @@ public class QuotationsControllerTests : IClassFixture<ApiWebApplicationFactory>
     {
         string token = TestJwtTokenFactory.Create(
             Guid.NewGuid(),
-            permissions: [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits],
+            permissions: [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewAllUnits],
             unitIds: []);
         HttpClient client = CreateClient(token);
 
@@ -95,7 +95,7 @@ public class QuotationsControllerTests : IClassFixture<ApiWebApplicationFactory>
         Guid unit1Id = await GetUnitIdAsync("Unit-1");
         string token = TestJwtTokenFactory.Create(
             Guid.NewGuid(),
-            permissions: [PermissionCodes.QuotationView],
+            permissions: [PermissionCodes.QuotationViewPipeline],
             unitIds: [unit1Id]);
         HttpClient client = CreateClient(token);
 
@@ -111,7 +111,7 @@ public class QuotationsControllerTests : IClassFixture<ApiWebApplicationFactory>
         // enough to query any unit, proving unit assignment is irrelevant once viewAllUnits is granted.
         string token = TestJwtTokenFactory.Create(
             Guid.NewGuid(),
-            permissions: [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits],
+            permissions: [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewAllUnits],
             unitIds: []);
         HttpClient client = CreateClient(token);
 
@@ -125,7 +125,7 @@ public class QuotationsControllerTests : IClassFixture<ApiWebApplicationFactory>
     {
         string token = TestJwtTokenFactory.Create(
             Guid.NewGuid(),
-            permissions: [PermissionCodes.QuotationView],
+            permissions: [PermissionCodes.QuotationViewPipeline],
             unitIds: [Guid.NewGuid()]); // assigned to some other unit, not the one requested
         HttpClient client = CreateClient(token);
 
@@ -142,7 +142,7 @@ public class QuotationsControllerTests : IClassFixture<ApiWebApplicationFactory>
     {
         string token = TestJwtTokenFactory.Create(
             Guid.NewGuid(),
-            permissions: [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits],
+            permissions: [PermissionCodes.QuotationViewSummary, PermissionCodes.QuotationViewAllUnits],
             unitIds: []);
         HttpClient client = CreateClient(token);
 
@@ -159,7 +159,7 @@ public class QuotationsControllerTests : IClassFixture<ApiWebApplicationFactory>
         Guid quotationId = await GetQuotationIdAsync("QTN-2026-0001");
         string token = TestJwtTokenFactory.Create(
             Guid.NewGuid(),
-            permissions: [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits],
+            permissions: [PermissionCodes.QuotationViewSummary, PermissionCodes.QuotationViewAllUnits],
             unitIds: []);
         HttpClient client = CreateClient(token);
 
@@ -178,7 +178,7 @@ public class QuotationsControllerTests : IClassFixture<ApiWebApplicationFactory>
     {
         string token = TestJwtTokenFactory.Create(
             Guid.NewGuid(),
-            permissions: [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits],
+            permissions: [PermissionCodes.QuotationViewConversion, PermissionCodes.QuotationViewAllUnits],
             unitIds: []);
         HttpClient client = CreateClient(token);
 
@@ -189,11 +189,26 @@ public class QuotationsControllerTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task GetConversion_MissingQuotationViewConversionPermission_Returns403()
+    {
+        string token = TestJwtTokenFactory.Create(
+            Guid.NewGuid(),
+            permissions: [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewAllUnits],
+            unitIds: []);
+        HttpClient client = CreateClient(token);
+
+        HttpResponseMessage response =
+            await client.GetAsync("/api/sales/quotations/conversion?fromDate=2026-06-01&toDate=2026-08-31");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task GetAging_ViewAllUnits_Returns200()
     {
         string token = TestJwtTokenFactory.Create(
             Guid.NewGuid(),
-            permissions: [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits],
+            permissions: [PermissionCodes.QuotationViewAging, PermissionCodes.QuotationViewAllUnits],
             unitIds: []);
         HttpClient client = CreateClient(token);
 
@@ -203,16 +218,55 @@ public class QuotationsControllerTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task GetAging_MissingQuotationViewAgingPermission_Returns403()
+    {
+        string token = TestJwtTokenFactory.Create(
+            Guid.NewGuid(),
+            permissions: [PermissionCodes.QuotationViewPipeline, PermissionCodes.QuotationViewAllUnits],
+            unitIds: []);
+        HttpClient client = CreateClient(token);
+
+        HttpResponseMessage response = await client.GetAsync("/api/sales/quotations/aging");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task GetSummary_ViewAllUnits_Returns200()
     {
         string token = TestJwtTokenFactory.Create(
             Guid.NewGuid(),
-            permissions: [PermissionCodes.QuotationView, PermissionCodes.QuotationViewAllUnits],
+            permissions: [PermissionCodes.QuotationViewSummary, PermissionCodes.QuotationViewAllUnits],
             unitIds: []);
         HttpClient client = CreateClient(token);
 
         HttpResponseMessage response = await client.GetAsync("/api/sales/quotations/summary");
 
         response.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task GetUnits_AnyQuotationViewPermission_Returns200()
+    {
+        string token = TestJwtTokenFactory.Create(
+            Guid.NewGuid(),
+            permissions: [PermissionCodes.QuotationViewSummary],
+            unitIds: []);
+        HttpClient client = CreateClient(token);
+
+        HttpResponseMessage response = await client.GetAsync("/api/sales/quotations/units");
+
+        response.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task GetUnits_NoQuotationViewPermissionAtAll_Returns403()
+    {
+        string token = TestJwtTokenFactory.Create(Guid.NewGuid(), permissions: [], unitIds: []);
+        HttpClient client = CreateClient(token);
+
+        HttpResponseMessage response = await client.GetAsync("/api/sales/quotations/units");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 }
