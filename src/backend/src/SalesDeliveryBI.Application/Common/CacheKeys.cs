@@ -15,6 +15,10 @@ public static class CacheKeys
     public static string Conversion(UnitScope scope, DateOnly fromDate, DateOnly toDate) =>
         $"bi:sales:quotation:conversion:{ScopeSegment(scope)}:{Fmt(fromDate)}:{Fmt(toDate)}";
 
+    /// <summary>Backs the trend chart's "previous period" comparison series (docs/requirements §4.2) — a distinct key from Conversion() since it's a separate, narrower cached query (trend only, no KPIs/buyer-performance).</summary>
+    public static string ConversionTrend(UnitScope scope, DateOnly fromDate, DateOnly toDate) =>
+        $"bi:sales:quotation:conversion:trend:{ScopeSegment(scope)}:{Fmt(fromDate)}:{Fmt(toDate)}";
+
     public static string Aging(UnitScope scope, bool includeDraft, DateOnly? fromDate, DateOnly? toDate) =>
         $"bi:sales:quotation:aging:{ScopeSegment(scope)}:draft:{includeDraft}:{DateRangeSegment(fromDate, toDate)}";
 

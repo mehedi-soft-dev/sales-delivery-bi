@@ -38,6 +38,7 @@ export interface NavGroup extends NavNodeBase {
 export type NavNode = NavLeaf | NavGroup;
 
 export const NAV_TREE: readonly NavNode[] = [
+  { kind: 'leaf', label: 'Executive', iconName: 'chart-pie', path: '/overview' },
   {
     kind: 'group',
     label: 'Dashboard',

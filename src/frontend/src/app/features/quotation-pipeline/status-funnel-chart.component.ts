@@ -1,11 +1,14 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { ChartComponent } from 'ng-apexcharts';
 import type { ApexAxisChartSeries, ApexChart, ApexDataLabels, ApexPlotOptions, ApexTooltip, ApexXAxis } from 'ng-apexcharts';
 import type { StatusFunnelEntryDto } from '../../core/models/dashboard.models';
 import { createBaseChartOptions } from '../../shared/charts/apex-chart-theme';
 import { DEFAULT_STATUS_BADGE_COLOR, STATUS_BADGE_COLOR, formatStatusLabel } from '../../shared/components/status-badge/status-badge.config';
 
-/** Horizontal bar, one segment per pipeline stage — same color mapping as `app-status-badge`. */
+/**
+ * Horizontal bar, one segment per pipeline stage — same color mapping as `app-status-badge`.
+ * Clicking a segment emits its raw status code so the page can filter the grid below (docs/requirements §4.1).
+ */
 @Component({
   selector: 'app-status-funnel-chart',
   imports: [ChartComponent],
@@ -13,10 +16,23 @@ import { DEFAULT_STATUS_BADGE_COLOR, STATUS_BADGE_COLOR, formatStatusLabel } fro
 })
 export class StatusFunnelChartComponent {
   readonly entries = input.required<readonly StatusFunnelEntryDto[]>();
+  readonly statusSelected = output<string>();
 
   private readonly base = createBaseChartOptions();
 
-  protected readonly chart: ApexChart = { ...this.base.chart, type: 'bar', height: 260 };
+  protected readonly chart: ApexChart = {
+    ...this.base.chart,
+    type: 'bar',
+    height: 260,
+    events: {
+      dataPointSelection: (_event: unknown, _chartContext: unknown, config: { dataPointIndex: number }) => {
+        const entry = this.entries()[config.dataPointIndex];
+        if (entry) {
+          this.statusSelected.emit(entry.status);
+        }
+      },
+    },
+  };
   protected readonly grid = this.base.grid;
   protected readonly legend = { show: false };
   protected readonly dataLabels: ApexDataLabels = {

@@ -17,6 +17,16 @@
   padding: 1.5rem;
 }
 
+:host ::ng-deep .aging-grid .aging-grid__row--high-risk > td {
+  background-color: #fef2f2;
+  border-left: 3px solid #d03b3b;
+}
+
+:host ::ng-deep .aging-grid .aging-grid__row--medium-risk > td {
+  background-color: #fffbeb;
+  border-left: 3px solid #fab219;
+}
+
 @media (max-width: 767px) {
   :host ::ng-deep .aging-grid .aging-grid__col--low-priority {
     display: none;

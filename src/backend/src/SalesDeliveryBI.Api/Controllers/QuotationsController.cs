@@ -25,12 +25,33 @@ public class QuotationsController : ControllerBase
     public async Task<ActionResult<DashboardResponse<QuotationPipelineResponseDto>>> GetPipeline(
         [FromQuery] Guid? unitId,
         [FromQuery] bool includeDraft,
+        [FromQuery] string? status,
+        [FromQuery] string? buyerName,
         [FromQuery] DateOnly? fromDate,
         [FromQuery] DateOnly? toDate,
         [FromQuery] GridQuery grid,
         CancellationToken cancellationToken)
     {
-        return Ok(await _appService.GetPipelineAsync(unitId, includeDraft, fromDate, toDate, grid, cancellationToken));
+        return Ok(await _appService.GetPipelineAsync(unitId, includeDraft, status, buyerName, fromDate, toDate, grid, cancellationToken));
+    }
+
+    /// <summary>Excel export of the (optionally status/buyer-filtered) Pipeline grid — same policy/guard as the dashboard itself.</summary>
+    [HttpGet("pipeline/export")]
+    [Authorize(Policy = AuthorizationPolicies.QuotationPipelineRead)]
+    public async Task<IActionResult> ExportPipeline(
+        [FromQuery] Guid? unitId,
+        [FromQuery] bool includeDraft,
+        [FromQuery] string? status,
+        [FromQuery] string? buyerName,
+        [FromQuery] DateOnly? fromDate,
+        [FromQuery] DateOnly? toDate,
+        CancellationToken cancellationToken)
+    {
+        (byte[] content, DateTime lastRefresh) =
+            await _appService.ExportPipelineAsync(unitId, includeDraft, status, buyerName, fromDate, toDate, cancellationToken);
+
+        string fileName = $"quotation-pipeline-{lastRefresh:yyyyMMdd-HHmm}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     [HttpGet("conversion")]
@@ -54,12 +75,13 @@ public class QuotationsController : ControllerBase
     public async Task<ActionResult<DashboardResponse<AgingResponseDto>>> GetAging(
         [FromQuery] Guid? unitId,
         [FromQuery] bool includeDraft,
+        [FromQuery] bool highRiskOnly,
         [FromQuery] DateOnly? fromDate,
         [FromQuery] DateOnly? toDate,
         [FromQuery] GridQuery grid,
         CancellationToken cancellationToken)
     {
-        return Ok(await _appService.GetAgingAsync(unitId, includeDraft, fromDate, toDate, grid, cancellationToken));
+        return Ok(await _appService.GetAgingAsync(unitId, includeDraft, highRiskOnly, fromDate, toDate, grid, cancellationToken));
     }
 
     [HttpGet("summary")]

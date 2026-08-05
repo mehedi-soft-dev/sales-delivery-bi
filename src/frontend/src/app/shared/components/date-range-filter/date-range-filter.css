@@ -5,13 +5,22 @@
   align-items: center;
 }
 
+/* Explicit width, not just min-width — PrimeNG's DatePicker host has no intrinsic width cap of its own
+   (its inner <input> sizes itself off the browser's default `size` attribute), so without a fixed width
+   here each field renders ~300px wide, wildly out of proportion with every other filter control in the
+   app (unit dropdown, toggles). */
 .date-range-filter__date {
-  min-width: 160px;
+  width: 190px;
+  flex: 0 0 auto;
 }
 
 @media (max-width: 639px) {
   .date-range-filter {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .date-range-filter__date {
+    width: 100%;
   }
 }

@@ -9,7 +9,12 @@ export const routes: Routes = [
     component: Shell,
     canActivate: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'pipeline' },
+      { path: '', pathMatch: 'full', redirectTo: 'overview' },
+      {
+        path: 'overview',
+        loadComponent: () =>
+          import('./features/executive-overview/executive-overview.page').then((m) => m.ExecutiveOverviewPage),
+      },
       {
         path: 'pipeline',
         loadComponent: () => import('./features/quotation-pipeline/pipeline.page').then((m) => m.PipelinePage),

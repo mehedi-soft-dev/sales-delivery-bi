@@ -15,4 +15,6 @@ export class BuyerPerformanceGridComponent {
   readonly page = input.required<PagedResult<BuyerPerformanceDto>>();
   readonly loading = input(false);
   readonly lazyLoad = output<TableLazyLoadEvent>();
+  /** Row click drills down to that buyer's quotations on the Pipeline dashboard (docs/requirements §4.2). */
+  readonly buyerSelected = output<string>();
 }

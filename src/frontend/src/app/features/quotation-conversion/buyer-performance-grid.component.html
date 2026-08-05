@@ -34,7 +34,7 @@
   </ng-template>
 
   <ng-template #body let-row>
-    <tr>
+    <tr class="buyer-performance-grid__row" (click)="buyerSelected.emit(row.buyerName)">
       <td>{{ row.buyerName }}</td>
       <td class="buyer-performance-grid__col--right buyer-performance-grid__col--low-priority">{{ row.quotationsCount }}</td>
       <td class="buyer-performance-grid__col--right buyer-performance-grid__col--low-priority">{{ row.wonCount }}</td>

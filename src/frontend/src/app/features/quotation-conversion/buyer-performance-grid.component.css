@@ -17,6 +17,14 @@
   padding: 1.5rem;
 }
 
+.buyer-performance-grid__row {
+  cursor: pointer;
+}
+
+:host ::ng-deep .buyer-performance-grid .buyer-performance-grid__row:hover > td {
+  background-color: var(--p-surface-100);
+}
+
 @media (max-width: 767px) {
   :host ::ng-deep .buyer-performance-grid .buyer-performance-grid__col--low-priority {
     display: none;

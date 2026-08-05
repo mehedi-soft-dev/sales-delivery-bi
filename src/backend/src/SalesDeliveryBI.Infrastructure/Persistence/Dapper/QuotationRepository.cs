@@ -97,10 +97,27 @@ public class QuotationRepository : IQuotationRepository
         IEnumerable<BuyerPerformanceDto> buyerPerformance = await connection.QueryAsync<BuyerPerformanceDto>(
             new CommandDefinition(ConversionBuyerPerformanceSql, parameters, cancellationToken: cancellationToken));
 
+        IEnumerable<LostReasonBreakdownDto> lostReasons = await connection.QueryAsync<LostReasonBreakdownDto>(
+            new CommandDefinition(ConversionLostReasonSql, parameters, cancellationToken: cancellationToken));
+
         DateTime lastRefresh = await GetLastRefreshAsync(connection, "bi.mv_quotation_conversion_rate", cancellationToken);
 
-        var dto = new ConversionDto(kpis, trend.ToList(), buyerPerformance.ToList());
+        var dto = new ConversionDto(kpis, trend.ToList(), buyerPerformance.ToList(), lostReasons.ToList());
         return new DashboardResponse<ConversionDto>(dto, lastRefresh);
+    }
+
+    public async Task<IReadOnlyList<MonthlyTrendEntryDto>> GetMonthlyTrendAsync(
+        UnitScope scope, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken)
+    {
+        await using NpgsqlConnection connection = await OpenConnectionAsync(cancellationToken);
+        DynamicParameters parameters = ScopeParams(scope);
+        parameters.Add("FromDate", fromDate);
+        parameters.Add("ToDate", toDate);
+
+        IEnumerable<MonthlyTrendEntryDto> trend = await connection.QueryAsync<MonthlyTrendEntryDto>(
+            new CommandDefinition(ConversionTrendSql, parameters, cancellationToken: cancellationToken));
+
+        return trend.ToList();
     }
 
     public async Task<DashboardResponse<AgingDto>> GetAgingSummaryAsync(
@@ -325,6 +342,21 @@ public class QuotationRepository : IQuotationRepository
         WHERE month BETWEEN date_trunc('month', @FromDate) AND date_trunc('month', @ToDate)
           AND (@Unrestricted OR unit_id = ANY(@UnitIds))
         GROUP BY buyer_name
+        ORDER BY ValueUsd DESC
+        """;
+
+    /// <summary>
+    /// Win/Loss reason analysis (docs/requirements §4.2) — LOST_REASON only exists on the row-level
+    /// mv_sales_quotation_summary (§3.1), not the pre-aggregated mv_quotation_conversion_rate, so this
+    /// reads the detail MV directly, scoped to the same Rejected/Expired quotations that make up "Lost".
+    /// </summary>
+    private const string ConversionLostReasonSql = """
+        SELECT COALESCE(lost_reason, 'Unspecified') AS Reason, COUNT(*)::int AS Count, COALESCE(SUM(quotation_value_usd), 0) AS ValueUsd
+        FROM bi.mv_sales_quotation_summary
+        WHERE status IN ('Rejected', 'Expired')
+          AND quotation_date BETWEEN @FromDate AND @ToDate
+          AND (@Unrestricted OR unit_id = ANY(@UnitIds))
+        GROUP BY Reason
         ORDER BY ValueUsd DESC
         """;
 

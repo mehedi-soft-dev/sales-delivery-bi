@@ -6,7 +6,7 @@
   <app-date-range-filter [initialValue]="defaultDateRange" (filterChange)="onDateRangeChange($event)" />
 
   @if (service.loading() && !service.data()) {
-    <app-loading-skeleton [kpiCount]="4" [contentBlockHeights]="[280, 280, 320]" />
+    <app-loading-skeleton [kpiCount]="4" [contentBlockHeights]="[280, 280, 260, 320]" />
   } @else if (service.error()) {
     <div class="dashboard-state dashboard-state--error" role="alert">
       Something went wrong loading the conversion dashboard. Please try again.
@@ -32,7 +32,7 @@
     <div class="dashboard-charts">
       <div class="dashboard-card">
         <h2>Won vs Lost Trend</h2>
-        <app-conversion-trend-chart [trend]="conversion.monthlyTrend" />
+        <app-conversion-trend-chart [trend]="conversion.monthlyTrend" [previousTrend]="conversion.previousMonthlyTrend" />
       </div>
       <div class="dashboard-card">
         <h2>Won vs Lost Value</h2>
@@ -45,6 +45,13 @@
       </div>
     </div>
 
+    @if (conversion.lostReasons.length > 0) {
+      <div class="dashboard-card">
+        <h2>Loss Reason Analysis</h2>
+        <app-lost-reason-chart [reasons]="conversion.lostReasons" />
+      </div>
+    }
+
     <div class="dashboard-card__header">
       <h2>Buyer Performance</h2>
       <span class="dashboard-card__count-badge">{{ conversion.buyerPerformance.totalCount }} Records</span>
@@ -54,6 +61,7 @@
         [page]="conversion.buyerPerformance"
         [loading]="service.loading()"
         (lazyLoad)="onLazyLoad($event)"
+        (buyerSelected)="onBuyerSelected($event)"
       />
     </div>
   }

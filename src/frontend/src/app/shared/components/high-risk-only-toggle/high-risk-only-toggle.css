@@ -1,0 +1,12 @@
+.high-risk-only-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.high-risk-only-toggle__label {
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+  white-space: nowrap;
+}

@@ -51,6 +51,12 @@ body {
   font-weight: 600;
 }
 
+.dashboard-card__hint {
+  margin: -0.5rem 0 0.75rem;
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
 /* Table-only card: the title+count sit in a separate `.dashboard-card__header` row above the card
    (never inside it), so the table can go flush to the card edges with no double padding. */
 .dashboard-card--table {

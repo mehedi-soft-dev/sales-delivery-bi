@@ -21,8 +21,16 @@ export type OpenQuotationDto = components['schemas']['OpenQuotationDto'];
 export type AgedQuotationDto = components['schemas']['AgedQuotationDto'];
 export type BuyerPerformanceDto = components['schemas']['BuyerPerformanceDto'];
 export type AgingBucketDto = components['schemas']['AgingBucketDto'];
+export type RiskLevelBucketDto = components['schemas']['RiskLevelBucketDto'];
 export type StatusFunnelEntryDto = components['schemas']['StatusFunnelEntryDto'];
 export type MonthlyTrendEntryDto = components['schemas']['MonthlyTrendEntryDto'];
+
+/** Hand-typed like the *ResponseDto interfaces below — LostReasonBreakdownDto is new, not yet in api-schema.d.ts. */
+export interface LostReasonBreakdownDto {
+  reason: string;
+  count: number | string;
+  valueUsd: number | string;
+}
 
 export type PipelineKpisDto = components['schemas']['PipelineKpisDto'];
 export type ConversionKpisDto = components['schemas']['ConversionKpisDto'];
@@ -43,12 +51,15 @@ export interface QuotationPipelineResponseDto {
 export interface ConversionResponseDto {
   kpis: ConversionKpisDto;
   monthlyTrend: MonthlyTrendEntryDto[];
+  previousMonthlyTrend: MonthlyTrendEntryDto[];
   buyerPerformance: PagedResult<BuyerPerformanceDto>;
+  lostReasons: LostReasonBreakdownDto[];
 }
 
 export interface AgingResponseDto {
   kpis: AgingKpisDto;
   agingBuckets: AgingBucketDto[];
+  riskLevels: RiskLevelBucketDto[];
   agedQuotations: PagedResult<AgedQuotationDto>;
 }
 

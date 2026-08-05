@@ -1,16 +1,24 @@
 <div class="aging-page">
   <app-page-header title="Aging" subtitle="Open quotations by age, with high-risk exposure surfaced first" icon="clock">
     <app-include-draft-toggle [(checked)]="includeDraft" />
+    <app-high-risk-only-toggle [(checked)]="highRiskOnly" />
     <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
   </app-page-header>
 
   @if (service.loading() && !service.data()) {
-    <app-loading-skeleton [kpiCount]="2" [contentBlockHeights]="[300, 360]" />
+    <app-loading-skeleton [kpiCount]="3" [contentBlockHeights]="[300, 360]" />
   } @else if (service.error()) {
     <div class="dashboard-state dashboard-state--error" role="alert">
       Something went wrong loading the aging dashboard. Please try again.
     </div>
   } @else if (service.data(); as aging) {
+    @let highRiskCount = highRiskCountOf(aging.riskLevels);
+    @if (highRiskCount > 0) {
+      <div class="aging-page__alert" role="alert">
+        {{ highRiskCount }} quotation{{ highRiskCount === 1 ? '' : 's' }} open more than 30 days — high risk of loss.
+      </div>
+    }
+
     <div class="dashboard-kpis">
       <app-kpi-card label="Total Open Value" [value]="aging.kpis.totalOpenValueUsd | currencyUsd" icon="wallet" accent="blue" />
       <app-kpi-card
@@ -19,6 +27,7 @@
         icon="exclamation-triangle"
         accent="red"
       />
+      <app-kpi-card label="High-Risk Count" [value]="asCount(highRiskCount)" icon="exclamation-triangle" accent="red" />
     </div>
 
     <div class="dashboard-card">
@@ -31,7 +40,13 @@
       <span class="dashboard-card__count-badge">{{ aging.agedQuotations.totalCount }} Records</span>
     </div>
     <div class="dashboard-card dashboard-card--table">
-      <app-aging-grid [page]="aging.agedQuotations" [loading]="service.loading()" (lazyLoad)="onLazyLoad($event)" />
+      <app-aging-grid
+        [page]="aging.agedQuotations"
+        [loading]="service.loading()"
+        [sortField]="grid().sortField"
+        [sortOrder]="grid().sortDescending ? -1 : 1"
+        (lazyLoad)="onLazyLoad($event)"
+      />
     </div>
   }
 </div>

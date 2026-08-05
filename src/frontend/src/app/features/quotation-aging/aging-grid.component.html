@@ -29,7 +29,7 @@
   </ng-template>
 
   <ng-template #body let-row>
-    <tr>
+    <tr [ngClass]="rowRiskClass(row.riskLevel)">
       <td>{{ row.quotationNo }}</td>
       <td>{{ row.buyerName }}</td>
       <td class="aging-grid__col--low-priority">{{ row.unitName }}</td>

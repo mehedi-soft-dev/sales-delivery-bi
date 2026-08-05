@@ -1,0 +1,53 @@
+<div class="executive-overview-page">
+  <app-page-header title="Executive Overview" subtitle="Quotation pipeline health at a glance" icon="chart-pie">
+    <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
+  </app-page-header>
+
+  @if (service.loading() && !service.data()) {
+    <app-loading-skeleton [kpiCount]="3" [contentBlockHeights]="[]" />
+  } @else if (service.error()) {
+    <div class="dashboard-state dashboard-state--error" role="alert">
+      Something went wrong loading the executive overview. Please try again.
+    </div>
+  } @else if (service.data(); as summary) {
+    @let alertCount = asCount(summary.highValueAgedAlertCount);
+    @if (alertCount > 0) {
+      <div class="executive-overview-page__alert" role="alert">
+        {{ alertCount }} high-value quotation{{ alertCount === 1 ? '' : 's' }} pending more than 15 days — review in
+        Aging.
+      </div>
+    }
+
+    <div class="dashboard-kpis">
+      <a routerLink="/pipeline" class="executive-overview-page__kpi-link" aria-label="View Pipeline dashboard">
+        <app-kpi-card label="Open Pipeline Value" [value]="summary.openPipelineValueUsd | currencyUsd" icon="wallet" accent="blue" />
+      </a>
+      <a routerLink="/conversion" class="executive-overview-page__kpi-link" aria-label="View Conversion & Win/Loss dashboard">
+        <app-kpi-card
+          label="Conversion Rate (MTD)"
+          [value]="summary.conversionRateMtdPct | ratePercent"
+          icon="percentage"
+          accent="green"
+        />
+      </a>
+      <a routerLink="/aging" class="executive-overview-page__kpi-link" aria-label="View Aging dashboard">
+        <app-kpi-card
+          label="High-Value Aged Alerts"
+          [value]="asCount(summary.highValueAgedAlertCount).toString()"
+          icon="exclamation-triangle"
+          [accent]="alertCount > 0 ? 'red' : 'blue'"
+        />
+      </a>
+    </div>
+
+    <div class="dashboard-card executive-overview-page__hint">
+      <h2>What am I looking at?</h2>
+      <p>
+        <strong>Open Pipeline Value</strong> is the total value of every quotation still open (not yet converted, rejected, or
+        expired). <strong>Conversion Rate (MTD)</strong> is the share of this month's quotations won so far. <strong>High-Value
+        Aged Alerts</strong> counts open quotations above the value threshold that have sat open for more than 15 days. Click any
+        card to drill into the underlying dashboard.
+      </p>
+    </div>
+  }
+</div>

@@ -25,6 +25,16 @@ public interface IQuotationRepository
         DateOnly toDate,
         CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Just the monthly trend line, no KPIs/buyer-performance — used for the "previous period" comparison
+    /// series (docs/requirements §4.2), which only needs the trend, not a second full conversion summary.
+    /// </summary>
+    Task<IReadOnlyList<MonthlyTrendEntryDto>> GetMonthlyTrendAsync(
+        UnitScope scope,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken cancellationToken);
+
     /// <summary>includeDraft/fromDate/toDate are the same semantics as GetPipelineSummaryAsync.</summary>
     Task<DashboardResponse<AgingDto>> GetAgingSummaryAsync(
         UnitScope scope, bool includeDraft, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken);

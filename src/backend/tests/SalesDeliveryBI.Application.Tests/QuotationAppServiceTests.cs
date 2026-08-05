@@ -22,7 +22,8 @@ public class QuotationAppServiceTests
         var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
         DashboardResponse<QuotationPipelineResponseDto> result =
-            await appService.GetPipelineAsync(unitId: null, includeDraft: false, fromDate: null, toDate: null, DefaultGrid);
+            await appService.GetPipelineAsync(
+                unitId: null, includeDraft: false, status: null, buyerName: null, fromDate: null, toDate: null, DefaultGrid);
 
         Assert.Equal(1, guard.CallCount);
         Assert.Equal(1, cache.CallCount);
@@ -43,7 +44,8 @@ public class QuotationAppServiceTests
         var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(
-            () => appService.GetPipelineAsync(Guid.NewGuid(), includeDraft: false, fromDate: null, toDate: null, DefaultGrid));
+            () => appService.GetPipelineAsync(
+                Guid.NewGuid(), includeDraft: false, status: null, buyerName: null, fromDate: null, toDate: null, DefaultGrid));
 
         Assert.Equal(0, cache.CallCount);
         Assert.Equal(0, repository.CallCount);
@@ -66,7 +68,7 @@ public class QuotationAppServiceTests
         var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
         DashboardResponse<QuotationPipelineResponseDto> firstPage = await appService.GetPipelineAsync(
-            null, includeDraft: false, fromDate: null, toDate: null,
+            null, includeDraft: false, status: null, buyerName: null, fromDate: null, toDate: null,
             new GridQuery(Page: 1, PageSize: 2, SortField: "valueUsd", SortDescending: false));
 
         Assert.Equal(3, firstPage.Data.OpenQuotations.TotalCount);
@@ -77,7 +79,7 @@ public class QuotationAppServiceTests
         // Only 1 cache/repository call across two different pages of the SAME cached dataset —
         // paging never bypasses or multiplies the cache-aside call.
         DashboardResponse<QuotationPipelineResponseDto> secondPage = await appService.GetPipelineAsync(
-            null, includeDraft: false, fromDate: null, toDate: null,
+            null, includeDraft: false, status: null, buyerName: null, fromDate: null, toDate: null,
             new GridQuery(Page: 2, PageSize: 2, SortField: "valueUsd", SortDescending: false));
 
         Assert.Single(secondPage.Data.OpenQuotations.Items);
@@ -100,7 +102,8 @@ public class QuotationAppServiceTests
         Assert.Same(resolvedScope, repository.LastScope);
         Assert.Equal(fromDate, repository.LastFromDate);
         Assert.Equal(toDate, repository.LastToDate);
-        Assert.Equal(CacheKeys.Conversion(resolvedScope, fromDate, toDate), cache.LastKey);
+        // Two cache calls: the main conversion summary, then the previous-period trend comparison series.
+        Assert.Contains(CacheKeys.Conversion(resolvedScope, fromDate, toDate), cache.Keys);
         Assert.Equal(CacheTtls.Conversion, cache.LastTtl);
     }
 
@@ -128,7 +131,7 @@ public class QuotationAppServiceTests
         var repository = new FakeQuotationRepository();
         var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
-        await appService.GetAgingAsync(null, includeDraft: false, fromDate: null, toDate: null, DefaultGrid);
+        await appService.GetAgingAsync(null, includeDraft: false, highRiskOnly: false, fromDate: null, toDate: null, DefaultGrid);
 
         Assert.Same(resolvedScope, repository.LastScope);
         Assert.False(repository.LastIncludeDraft);
@@ -145,7 +148,8 @@ public class QuotationAppServiceTests
         var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(
-            () => appService.GetAgingAsync(Guid.NewGuid(), includeDraft: false, fromDate: null, toDate: null, DefaultGrid));
+            () => appService.GetAgingAsync(
+                Guid.NewGuid(), includeDraft: false, highRiskOnly: false, fromDate: null, toDate: null, DefaultGrid));
 
         Assert.Equal(0, cache.CallCount);
         Assert.Equal(0, repository.CallCount);
@@ -167,7 +171,8 @@ public class QuotationAppServiceTests
         var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
         DashboardResponse<AgingResponseDto> result =
-            await appService.GetAgingAsync(null, includeDraft: false, fromDate: null, toDate: null, new GridQuery(Page: 1, PageSize: 1));
+            await appService.GetAgingAsync(
+                null, includeDraft: false, highRiskOnly: false, fromDate: null, toDate: null, new GridQuery(Page: 1, PageSize: 1));
 
         Assert.Equal(2, result.Data.AgedQuotations.TotalCount);
         Assert.Single(result.Data.AgedQuotations.Items);

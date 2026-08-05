@@ -6,13 +6,16 @@ namespace SalesDeliveryBI.Application.Dtos;
 public sealed record ConversionDto(
     ConversionKpisDto Kpis,
     IReadOnlyList<MonthlyTrendEntryDto> MonthlyTrend,
-    IReadOnlyList<BuyerPerformanceDto> BuyerPerformance);
+    IReadOnlyList<BuyerPerformanceDto> BuyerPerformance,
+    IReadOnlyList<LostReasonBreakdownDto> LostReasons);
 
 /// <summary>What the API actually returns — BuyerPerformance is the server-side-paged slice, sliced from the cached full list in QuotationAppService.</summary>
 public sealed record ConversionResponseDto(
     ConversionKpisDto Kpis,
     IReadOnlyList<MonthlyTrendEntryDto> MonthlyTrend,
-    PagedResult<BuyerPerformanceDto> BuyerPerformance);
+    IReadOnlyList<MonthlyTrendEntryDto> PreviousMonthlyTrend,
+    PagedResult<BuyerPerformanceDto> BuyerPerformance,
+    IReadOnlyList<LostReasonBreakdownDto> LostReasons);
 
 public sealed record ConversionKpisDto(
     decimal ConversionRatePct,
@@ -31,3 +34,6 @@ public sealed record BuyerPerformanceDto(
     int LostCount,
     decimal ConversionRatePct,
     decimal ValueUsd);
+
+/// <summary>Win/Loss reason analysis (docs/requirements §4.2) — aggregated over Rejected/Expired quotations only.</summary>
+public sealed record LostReasonBreakdownDto(string Reason, int Count, decimal ValueUsd);

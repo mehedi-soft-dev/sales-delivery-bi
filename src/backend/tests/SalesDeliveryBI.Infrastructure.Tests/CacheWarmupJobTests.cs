@@ -114,6 +114,10 @@ public class CacheWarmupJobTests
             UnitScope scope, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken) =>
             throw new InvalidOperationException("simulated Postgres failure");
 
+        public Task<IReadOnlyList<MonthlyTrendEntryDto>> GetMonthlyTrendAsync(
+            UnitScope scope, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("simulated Postgres failure");
+
         public Task<DashboardResponse<AgingDto>> GetAgingSummaryAsync(
             UnitScope scope, bool includeDraft, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken) =>
             throw new InvalidOperationException("simulated Postgres failure");

@@ -1,8 +1,33 @@
 <div class="pipeline-page">
   <app-page-header title="Quotation Pipeline" subtitle="Track and manage all quotations across your organization" icon="chart-line">
     <app-include-draft-toggle [(checked)]="includeDraft" />
+    <p-button
+      label="Export to Excel"
+      size="small"
+      severity="secondary"
+      [outlined]="true"
+      [loading]="exporting()"
+      (onClick)="onExport()"
+    />
     <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
   </app-page-header>
+
+  @if (statusFilter() || buyerNameFilter()) {
+    <div class="pipeline-page__filter-chips">
+      @if (statusFilter(); as status) {
+        <span class="pipeline-page__chip">
+          Status: {{ formatStatusLabel(status) }}
+          <button type="button" class="pipeline-page__chip-clear" aria-label="Clear status filter" (click)="clearStatusFilter()">×</button>
+        </span>
+      }
+      @if (buyerNameFilter(); as buyerName) {
+        <span class="pipeline-page__chip">
+          Buyer: {{ buyerName }}
+          <button type="button" class="pipeline-page__chip-clear" aria-label="Clear buyer filter" (click)="clearBuyerNameFilter()">×</button>
+        </span>
+      }
+    </div>
+  }
 
   @if (service.loading() && !service.data()) {
     <app-loading-skeleton [kpiCount]="4" [contentBlockHeights]="[260, 420]" />
@@ -31,7 +56,8 @@
     <div class="dashboard-charts">
       <div class="dashboard-card">
         <h2>Quotations by Status</h2>
-        <app-status-funnel-chart [entries]="pipeline.statusFunnel" />
+        <p class="dashboard-card__hint">Click a bar to filter the grid below</p>
+        <app-status-funnel-chart [entries]="pipeline.statusFunnel" (statusSelected)="onStatusSelected($event)" />
       </div>
       <div class="dashboard-card">
         <h2>Value by Status</h2>

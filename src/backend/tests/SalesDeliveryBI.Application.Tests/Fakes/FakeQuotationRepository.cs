@@ -41,8 +41,15 @@ internal sealed class FakeQuotationRepository : IQuotationRepository
         LastFromDate = fromDate;
         LastToDate = toDate;
         CallCount++;
-        var dto = new ConversionDto(new ConversionKpisDto(0m, 0m, 0m, 0d, 0, 0), [], BuyerPerformance);
+        var dto = new ConversionDto(new ConversionKpisDto(0m, 0m, 0m, 0d, 0, 0), [], BuyerPerformance, []);
         return Task.FromResult(new DashboardResponse<ConversionDto>(dto, DateTime.UtcNow));
+    }
+
+    public Task<IReadOnlyList<MonthlyTrendEntryDto>> GetMonthlyTrendAsync(
+        UnitScope scope, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken)
+    {
+        CallCount++;
+        return Task.FromResult<IReadOnlyList<MonthlyTrendEntryDto>>([]);
     }
 
     public Task<DashboardResponse<AgingDto>> GetAgingSummaryAsync(

@@ -71,6 +71,8 @@ public class QuotationAppService
     public async Task<DashboardResponse<QuotationPipelineResponseDto>> GetPipelineAsync(
         Guid? unitId,
         bool includeDraft,
+        string? status,
+        string? buyerName,
         DateOnly? fromDate,
         DateOnly? toDate,
         GridQuery grid,
@@ -84,7 +86,8 @@ public class QuotationAppService
             ct => _repository.GetPipelineSummaryAsync(scope, includeDraft, fromDate, toDate, ct),
             cancellationToken);
 
-        PagedResult<OpenQuotationDto> page = GridPaging.Apply(cached.Data.OpenQuotations, grid, PipelineSortSelectors);
+        IReadOnlyList<OpenQuotationDto> rows = FilterOpenQuotations(cached.Data.OpenQuotations, status, buyerName);
+        PagedResult<OpenQuotationDto> page = GridPaging.Apply(rows, grid, PipelineSortSelectors);
         var response = new QuotationPipelineResponseDto(cached.Data.Kpis, cached.Data.StatusFunnel, page);
 
         return new DashboardResponse<QuotationPipelineResponseDto>(response, cached.LastRefresh);
@@ -105,8 +108,21 @@ public class QuotationAppService
             ct => _repository.GetConversionSummaryAsync(scope, fromDate, toDate, ct),
             cancellationToken);
 
+        // Trend comparison, current vs previous period (docs/requirements §4.2): the immediately-preceding
+        // range of the same length as [fromDate, toDate], cached separately (CacheKeys.ConversionTrend)
+        // since it's a narrower query than the full conversion summary above.
+        int rangeLengthDays = toDate.DayNumber - fromDate.DayNumber;
+        DateOnly previousToDate = fromDate.AddDays(-1);
+        DateOnly previousFromDate = previousToDate.AddDays(-rangeLengthDays);
+
+        IReadOnlyList<MonthlyTrendEntryDto> previousTrend = await _cache.GetOrSetAsync(
+            CacheKeys.ConversionTrend(scope, previousFromDate, previousToDate),
+            _cacheTtls.Conversion,
+            ct => _repository.GetMonthlyTrendAsync(scope, previousFromDate, previousToDate, ct),
+            cancellationToken);
+
         PagedResult<BuyerPerformanceDto> page = GridPaging.Apply(cached.Data.BuyerPerformance, grid, BuyerPerformanceSortSelectors);
-        var response = new ConversionResponseDto(cached.Data.Kpis, cached.Data.MonthlyTrend, page);
+        var response = new ConversionResponseDto(cached.Data.Kpis, cached.Data.MonthlyTrend, previousTrend, page, cached.Data.LostReasons);
 
         return new DashboardResponse<ConversionResponseDto>(response, cached.LastRefresh);
     }
@@ -114,6 +130,7 @@ public class QuotationAppService
     public async Task<DashboardResponse<AgingResponseDto>> GetAgingAsync(
         Guid? unitId,
         bool includeDraft,
+        bool highRiskOnly,
         DateOnly? fromDate,
         DateOnly? toDate,
         GridQuery grid,
@@ -127,7 +144,14 @@ public class QuotationAppService
             ct => _repository.GetAgingSummaryAsync(scope, includeDraft, fromDate, toDate, ct),
             cancellationToken);
 
-        PagedResult<AgedQuotationDto> page = GridPaging.Apply(cached.Data.AgedQuotations, grid, AgedQuotationSortSelectors);
+        // "High Risk only" is a grid-only quick filter (docs/requirements §4.3) — it must not change the
+        // KPIs/aging-buckets/risk-level chart, which always reflect the full aged population, so it's applied
+        // in-memory here (same convention as paging/sorting) rather than folded into the cache key or SQL.
+        IReadOnlyList<AgedQuotationDto> rows = highRiskOnly
+            ? cached.Data.AgedQuotations.Where(q => q.RiskLevel == "High").ToList()
+            : cached.Data.AgedQuotations;
+
+        PagedResult<AgedQuotationDto> page = GridPaging.Apply(rows, grid, AgedQuotationSortSelectors);
         var response = new AgingResponseDto(cached.Data.Kpis, cached.Data.AgingBuckets, cached.Data.RiskLevels, page);
 
         return new DashboardResponse<AgingResponseDto>(response, cached.LastRefresh);
@@ -170,5 +194,57 @@ public class QuotationAppService
             _cacheTtls.Units,
             ct => _repository.GetUnitsAsync(scope, ct),
             cancellationToken);
+    }
+
+    /// <summary>
+    /// Excel export of the Pipeline grid (docs/requirements §4.1) — reuses the same cache entry GetPipelineAsync
+    /// reads (same unit/date scope, same guard), applies the same status/buyer filter, and exports every
+    /// matching row rather than just the current page.
+    /// </summary>
+    public async Task<(byte[] Content, DateTime LastRefresh)> ExportPipelineAsync(
+        Guid? unitId,
+        bool includeDraft,
+        string? status,
+        string? buyerName,
+        DateOnly? fromDate,
+        DateOnly? toDate,
+        CancellationToken cancellationToken = default)
+    {
+        UnitScope scope = _unitAccessGuard.Validate(unitId);
+
+        DashboardResponse<QuotationPipelineDto> cached = await _cache.GetOrSetAsync(
+            CacheKeys.Pipeline(scope, includeDraft, fromDate, toDate),
+            _cacheTtls.Pipeline,
+            ct => _repository.GetPipelineSummaryAsync(scope, includeDraft, fromDate, toDate, ct),
+            cancellationToken);
+
+        IReadOnlyList<OpenQuotationDto> rows = FilterOpenQuotations(cached.Data.OpenQuotations, status, buyerName);
+        byte[] content = QuotationExcelExporter.BuildPipelineWorkbook(rows);
+
+        return (content, cached.LastRefresh);
+    }
+
+    /// <summary>
+    /// "Status" backs the Pipeline funnel chart's clickable segments, "buyerName" backs Conversion's buyer
+    /// drill-down (docs/requirements §4.1/§4.2) — both are grid-only quick filters, so like Aging's
+    /// highRiskOnly they're applied in-memory here rather than folded into the cache key/SQL, leaving the
+    /// KPIs/status-funnel chart always reflecting the full open pipeline.
+    /// </summary>
+    private static List<OpenQuotationDto> FilterOpenQuotations(
+        IReadOnlyList<OpenQuotationDto> source, string? status, string? buyerName)
+    {
+        IEnumerable<OpenQuotationDto> rows = source;
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            rows = rows.Where(q => string.Equals(q.Status, status, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(buyerName))
+        {
+            rows = rows.Where(q => string.Equals(q.BuyerName, buyerName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return rows.ToList();
     }
 }
