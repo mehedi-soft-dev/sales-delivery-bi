@@ -217,11 +217,15 @@ public class QuotationAppServiceTests
         var cache = new FakeCacheService();
         var repository = new FakeQuotationRepository();
         var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
+        var fromDate = new DateOnly(2026, 6, 1);
+        var toDate = new DateOnly(2026, 6, 30);
 
-        await appService.GetSummaryAsync(null);
+        await appService.GetSummaryAsync(null, fromDate, toDate);
 
         Assert.Same(resolvedScope, repository.LastScope);
-        Assert.Equal(CacheKeys.Summary(resolvedScope), cache.LastKey);
+        Assert.Equal(fromDate, repository.LastFromDate);
+        Assert.Equal(toDate, repository.LastToDate);
+        Assert.Equal(CacheKeys.Summary(resolvedScope, fromDate, toDate), cache.LastKey);
         Assert.Equal(CacheTtls.Summary, cache.LastTtl);
     }
 
@@ -233,7 +237,8 @@ public class QuotationAppServiceTests
         var repository = new FakeQuotationRepository();
         var appService = new QuotationAppService(repository, cache, guard, CacheTtls);
 
-        await Assert.ThrowsAsync<ForbiddenAccessException>(() => appService.GetSummaryAsync(Guid.NewGuid()));
+        await Assert.ThrowsAsync<ForbiddenAccessException>(
+            () => appService.GetSummaryAsync(Guid.NewGuid(), new DateOnly(2026, 6, 1), new DateOnly(2026, 6, 30)));
 
         Assert.Equal(0, cache.CallCount);
         Assert.Equal(0, repository.CallCount);

@@ -62,32 +62,41 @@
   display: none;
 }
 
-@media (max-width: 767px) {
+/* Below 1024px, the static rail is hidden entirely — drawer-only (see shell.css). An icon-only rail at
+   tablet widths had no room to show real nav hierarchy (nav-node.css's dead-click group buttons). */
+@media (max-width: 1023px) {
   .sidebar-static {
     display: none;
   }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .sidebar-static {
-    width: var(--sidebar-width-collapsed, 72px);
-  }
-
-  .sidebar-static .sidebar-brand__name {
-    display: none;
-  }
-}
-
-:host ::ng-deep .sidebar-drawer .p-drawer {
+/* `.sidebar-drawer` (from [styleClass]) and `.p-drawer` are both classes on PrimeNG's own root panel
+   element, not ancestor/descendant — `.sidebar-drawer .p-drawer` never matched, so the drawer silently
+   kept PrimeNG's default light theme instead of matching the dark navy static sidebar. */
+:host ::ng-deep .sidebar-drawer.p-drawer {
   width: 270px;
   background: #14284b;
+}
+
+:host ::ng-deep .sidebar-drawer .p-drawer-header,
+:host ::ng-deep .sidebar-drawer .p-drawer-title {
+  color: #f8fafc;
+}
+
+:host ::ng-deep .sidebar-drawer .p-drawer-close-button {
+  color: #cbd5e1;
+}
+
+:host ::ng-deep .sidebar-drawer .p-drawer-close-button:hover {
+  background: rgb(255 255 255 / 0.08);
+  color: #ffffff;
 }
 
 :host ::ng-deep .sidebar-drawer .p-drawer-content {
   padding: 0.5rem 0.75rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   :host ::ng-deep .sidebar-drawer {
     display: none;
   }

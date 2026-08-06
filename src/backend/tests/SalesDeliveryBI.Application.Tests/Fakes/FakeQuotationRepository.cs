@@ -72,9 +72,12 @@ internal sealed class FakeQuotationRepository : IQuotationRepository
         return Task.FromResult(new DashboardResponse<QuotationDetailDto?>(null, DateTime.UtcNow));
     }
 
-    public Task<DashboardResponse<QuotationSummaryDto>> GetSummaryAsync(UnitScope scope, CancellationToken cancellationToken)
+    public Task<DashboardResponse<QuotationSummaryDto>> GetSummaryAsync(
+        UnitScope scope, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken)
     {
         LastScope = scope;
+        LastFromDate = fromDate;
+        LastToDate = toDate;
         CallCount++;
         var dto = new QuotationSummaryDto(0m, 0m, 0);
         return Task.FromResult(new DashboardResponse<QuotationSummaryDto>(dto, DateTime.UtcNow));

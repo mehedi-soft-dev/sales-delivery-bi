@@ -56,13 +56,9 @@
   }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .shell {
-    --sidebar-width: 72px;
-  }
-}
-
-@media (max-width: 767px) {
+/* Below 1024px, the sidebar is drawer-only (no static column) — same layout as mobile, extended through
+   tablet widths, since an icon-only static rail has no room to show real hierarchy (see nav-node.css). */
+@media (max-width: 1023px) {
   .shell {
     grid-template-columns: 1fr;
     grid-template-areas:

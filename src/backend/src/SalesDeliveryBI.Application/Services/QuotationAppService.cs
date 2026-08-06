@@ -170,14 +170,15 @@ public class QuotationAppService
             cancellationToken);
     }
 
-    public async Task<DashboardResponse<QuotationSummaryDto>> GetSummaryAsync(Guid? unitId, CancellationToken cancellationToken = default)
+    public async Task<DashboardResponse<QuotationSummaryDto>> GetSummaryAsync(
+        Guid? unitId, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken = default)
     {
         UnitScope scope = _unitAccessGuard.Validate(unitId);
 
         return await _cache.GetOrSetAsync(
-            CacheKeys.Summary(scope),
+            CacheKeys.Summary(scope, fromDate, toDate),
             _cacheTtls.Summary,
-            ct => _repository.GetSummaryAsync(scope, ct),
+            ct => _repository.GetSummaryAsync(scope, fromDate, toDate, ct),
             cancellationToken);
     }
 

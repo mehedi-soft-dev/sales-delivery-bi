@@ -1,9 +1,8 @@
 <div class="conversion-page">
   <app-page-header title="Conversion & Win/Loss" subtitle="Win-rate performance by buyer, over the selected date range" icon="percentage">
+    <app-date-range-filter [initialValue]="defaultDateRange" (filterChange)="onDateRangeChange($event)" />
     <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
   </app-page-header>
-
-  <app-date-range-filter [initialValue]="defaultDateRange" (filterChange)="onDateRangeChange($event)" />
 
   <p class="dashboard-scope-note">
     Showing quotations dated {{ (dateRange().fromDate | date: 'MMM d, y') || 'the earliest record' }} through

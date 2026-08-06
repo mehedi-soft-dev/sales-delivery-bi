@@ -24,7 +24,10 @@ public static class CacheKeys
 
     public static string Detail(Guid quotationId) => $"bi:sales:quotation:detail:{quotationId}";
 
-    public static string Summary(UnitScope scope) => $"bi:sales:quotation:summary:{ScopeSegment(scope)}";
+    /// <summary>Open Pipeline Value/High-Value Aged Alerts are "right now" snapshots (unaffected by the range) — only
+    /// Conversion Rate is date-scoped, but the whole cached DTO still needs one key per range like Conversion() does.</summary>
+    public static string Summary(UnitScope scope, DateOnly fromDate, DateOnly toDate) =>
+        $"bi:sales:quotation:summary:{ScopeSegment(scope)}:{Fmt(fromDate)}:{Fmt(toDate)}";
 
     public static string Units(UnitScope scope) => $"bi:sales:quotation:units:{ScopeSegment(scope)}";
 

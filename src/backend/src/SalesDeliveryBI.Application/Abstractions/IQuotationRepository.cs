@@ -42,7 +42,13 @@ public interface IQuotationRepository
     /// <summary>Data is null when the quotation doesn't exist or falls outside <paramref name="scope"/> — caller maps this to 404, never 403.</summary>
     Task<DashboardResponse<QuotationDetailDto?>> GetByIdAsync(Guid quotationId, UnitScope scope, CancellationToken cancellationToken);
 
-    Task<DashboardResponse<QuotationSummaryDto>> GetSummaryAsync(UnitScope scope, CancellationToken cancellationToken);
+    /// <summary>
+    /// OpenPipelineValueUsd/HighValueAgedAlertCount are always "right now" snapshots, unaffected by the range.
+    /// ConversionRateMtdPct is computed over [fromDate, toDate] (month-truncated, same as GetConversionSummaryAsync)
+    /// rather than always the current calendar month — the field name is a holdover from when it was MTD-only.
+    /// </summary>
+    Task<DashboardResponse<QuotationSummaryDto>> GetSummaryAsync(
+        UnitScope scope, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken);
 
     /// <summary>Units the caller may filter by — ALL units when <paramref name="scope"/> is unrestricted, otherwise only their assigned ones.</summary>
     Task<IReadOnlyList<UnitOptionDto>> GetUnitsAsync(UnitScope scope, CancellationToken cancellationToken);

@@ -88,9 +88,15 @@ public class QuotationsController : ControllerBase
     [Authorize(Policy = AuthorizationPolicies.QuotationSummaryRead)]
     public async Task<ActionResult<DashboardResponse<QuotationSummaryDto>>> GetSummary(
         [FromQuery] Guid? unitId,
+        [FromQuery] DateOnly? fromDate,
+        [FromQuery] DateOnly? toDate,
         CancellationToken cancellationToken)
     {
-        return Ok(await _appService.GetSummaryAsync(unitId, cancellationToken));
+        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+        DateOnly effectiveFromDate = fromDate ?? new DateOnly(today.Year, today.Month, 1);
+        DateOnly effectiveToDate = toDate ?? today;
+
+        return Ok(await _appService.GetSummaryAsync(unitId, effectiveFromDate, effectiveToDate, cancellationToken));
     }
 
     /// <summary>Units the caller may filter dashboards by — backs the topbar's unit dropdown.</summary>

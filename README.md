@@ -17,7 +17,6 @@ docker compose up --build
 | Postgres | 127.0.0.1:5444 |
 | Redis | 127.0.0.1:6391 |
 
-Use `127.0.0.1`, not `localhost` (Docker Desktop/Windows IPv6 quirk).
 
 Migrations + seed data apply automatically on first startup — no extra setup.
 

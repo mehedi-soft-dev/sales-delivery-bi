@@ -79,17 +79,3 @@
 .nav-node__group-btn--collapsed .nav-node__chevron {
   display: none;
 }
-
-/* Tablet auto-collapse is CSS-only (no JS breakpoint signal) — applies regardless of the desktop `isCollapsed` input. */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .nav-node__label,
-  .nav-node__chevron {
-    display: none;
-  }
-
-  .nav-node__link,
-  .nav-node__group-btn {
-    justify-content: center;
-    padding-inline: 0.625rem;
-  }
-}

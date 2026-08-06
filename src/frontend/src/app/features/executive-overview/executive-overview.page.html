@@ -1,11 +1,13 @@
 <div class="executive-overview-page">
   <app-page-header title="Executive Overview" subtitle="Quotation pipeline health at a glance" icon="chart-pie">
+    <app-date-range-filter [initialValue]="defaultDateRange" (filterChange)="onDateRangeChange($event)" />
     <app-data-as-of [lastRefresh]="service.lastRefresh()" (refresh)="onRefresh()" />
   </app-page-header>
 
   <p class="dashboard-scope-note">
     Open Pipeline Value and High-Value Aged Alerts reflect quotations open right now. Conversion Rate covers
-    {{ (service.lastRefresh() | date: 'MMMM y') || 'this month' }} only, month-to-date.
+    {{ (dateRange().fromDate | date: 'MMM d, y') || 'the earliest record' }} through
+    {{ (dateRange().toDate | date: 'MMM d, y') || 'today' }}.
   </p>
 
   @if (service.loading() && !service.data()) {
@@ -29,7 +31,7 @@
       </a>
       <a routerLink="/conversion" class="executive-overview-page__kpi-link" aria-label="View Conversion & Win/Loss dashboard">
         <app-kpi-card
-          label="Conversion Rate (MTD)"
+          label="Conversion Rate"
           [value]="summary.conversionRateMtdPct | ratePercent"
           icon="percentage"
           accent="green"
@@ -49,9 +51,9 @@
       <h2>What am I looking at?</h2>
       <p>
         <strong>Open Pipeline Value</strong> is the total value of every quotation still open (not yet converted, rejected, or
-        expired). <strong>Conversion Rate (MTD)</strong> is the share of this month's quotations won so far. <strong>High-Value
-        Aged Alerts</strong> counts open quotations above the value threshold that have sat open for more than 15 days. Click any
-        card to drill into the underlying dashboard.
+        expired). <strong>Conversion Rate</strong> is the share of quotations won within the selected date range above.
+        <strong>High-Value Aged Alerts</strong> counts open quotations above the value threshold that have sat open for more
+        than 15 days. Click any card to drill into the underlying dashboard.
       </p>
     </div>
   }

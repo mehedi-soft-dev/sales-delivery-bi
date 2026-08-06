@@ -170,7 +170,8 @@ public class QuotationRepository : IQuotationRepository
         return new DashboardResponse<QuotationDetailDto?>(dto, lastRefresh);
     }
 
-    public async Task<DashboardResponse<QuotationSummaryDto>> GetSummaryAsync(UnitScope scope, CancellationToken cancellationToken)
+    public async Task<DashboardResponse<QuotationSummaryDto>> GetSummaryAsync(
+        UnitScope scope, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await OpenConnectionAsync(cancellationToken);
         DynamicParameters parameters = ScopeParams(scope);
@@ -178,8 +179,11 @@ public class QuotationRepository : IQuotationRepository
         decimal openPipelineValueUsd = await connection.QuerySingleAsync<decimal>(
             new CommandDefinition(SummaryPipelineValueSql, parameters, cancellationToken: cancellationToken));
 
+        DynamicParameters conversionParameters = ScopeParams(scope);
+        conversionParameters.Add("FromDate", fromDate);
+        conversionParameters.Add("ToDate", toDate);
         decimal conversionRateMtdPct = await connection.QuerySingleAsync<decimal>(
-            new CommandDefinition(SummaryConversionRateMtdSql, parameters, cancellationToken: cancellationToken));
+            new CommandDefinition(SummaryConversionRateSql, conversionParameters, cancellationToken: cancellationToken));
 
         DynamicParameters alertParameters = ScopeParams(scope);
         alertParameters.Add("HighValueThresholdUsd", _highValueThresholdUsd);
@@ -417,10 +421,11 @@ public class QuotationRepository : IQuotationRepository
           AND (@Unrestricted OR unit_id = ANY(@UnitIds))
         """;
 
-    private const string SummaryConversionRateMtdSql = """
+    /// <summary>Same month-truncated-range pattern as ConversionKpisSql — the caller decides the range (default: current month, per QuotationsController.GetSummary).</summary>
+    private const string SummaryConversionRateSql = """
         SELECT COALESCE(ROUND(100.0 * SUM(won_count) / NULLIF(SUM(quotations_count),0), 2), 0)
         FROM bi.mv_quotation_conversion_rate
-        WHERE month = date_trunc('month', CURRENT_DATE)
+        WHERE month BETWEEN date_trunc('month', @FromDate) AND date_trunc('month', @ToDate)
           AND (@Unrestricted OR unit_id = ANY(@UnitIds))
         """;
 
