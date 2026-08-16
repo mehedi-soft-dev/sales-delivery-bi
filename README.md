@@ -2,6 +2,9 @@
 
 BI/reporting dashboards (Quotations, Sales Orders, Delivery, Invoice, Returns) over a Garment/Textile ERP.
 
+<img width="1918" height="950" alt="image" src="https://github.com/user-attachments/assets/a9f3726b-993f-4eba-8d2a-3adb6692dc62" />
+
+
 **Stack:** ASP.NET Core (.NET 10) · Angular 21 + PrimeNG + ApexCharts · PostgreSQL + pg_cron · Redis
 
 ## Run
